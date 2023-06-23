@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -62,7 +62,7 @@
 				<executions>
 					<execution>
 						<configuration>
-							<mainClass>org.sdc.spring.domain.crudify.example.TestApplication</mainClass>
+							<mainClass>org.sdc.com.garganttua.api.example.TestApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>

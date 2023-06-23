@@ -8,7 +8,7 @@ import com.garganttua.api.repository.GGAPIRepository;
 import com.garganttua.api.spec.IGGAPIDomain;
 
 @Repository("CarsRepository")
-@ComponentScan("org.sdc")
+@ComponentScan("com.garganttua")
 @EnableMongoRepositories
 public class CarsRepository extends GGAPIRepository<CarEntity, CarDTO> {
 

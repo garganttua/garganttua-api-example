@@ -17,7 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@GGAPIEntity(dto = "org.sdc.spring.domain.crudify.example.BookingDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "bookings")
+@GGAPIEntity(dto = "com.garganttua.api.example.BookingDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "bookings")
 public class BookingEntity extends AbstractGGAPIEntity {
 	
 	private Date from;

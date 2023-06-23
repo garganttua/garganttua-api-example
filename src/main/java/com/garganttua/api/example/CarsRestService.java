@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/cars")
-@ComponentScan("org.sdc")
+@ComponentScan("com.garganttua")
 @Tag(name = "cars", description = "The cars API")
 public class CarsRestService extends AbstractGGAPIService<CarEntity, CarDTO> {
 

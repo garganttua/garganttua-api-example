@@ -16,7 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@GGAPIEntity(dto = "org.sdc.spring.domain.crudify.example.MeetingRoomDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "meetingRooms")
+@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "meetingRooms")
 public class MeetingRoomEntity extends AbstractGGAPIEntity {
 
 	@JsonProperty
