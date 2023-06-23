@@ -1,1 +1,1 @@
-# garganttua-api-example
+# spring-domain-crudify-example
