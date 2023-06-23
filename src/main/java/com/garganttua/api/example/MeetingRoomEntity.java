@@ -1,9 +1,9 @@
 package com.garganttua.api.example;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.AbstractSpringCrudifyEntity;
-import com.garganttua.api.spec.ISpringCrudifyEntityFactory;
-import com.garganttua.api.spec.SpringCrudifyEntity;
+import com.garganttua.api.spec.AbstractGGAPIEntity;
+import com.garganttua.api.spec.IGGAPIEntityFactory;
+import com.garganttua.api.spec.GGAPIEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,8 +16,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SpringCrudifyEntity(dto = "org.sdc.spring.domain.crudify.example.MeetingRoomDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "meetingRooms")
-public class MeetingRoomEntity extends AbstractSpringCrudifyEntity {
+@GGAPIEntity(dto = "org.sdc.spring.domain.crudify.example.MeetingRoomDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "meetingRooms")
+public class MeetingRoomEntity extends AbstractGGAPIEntity {
 
 	@JsonProperty
 	private String name;
@@ -29,8 +29,8 @@ public class MeetingRoomEntity extends AbstractSpringCrudifyEntity {
 	private String[] facilities;
 
 	@Override
-	public ISpringCrudifyEntityFactory<MeetingRoomEntity> getFactory() {
-		ISpringCrudifyEntityFactory<MeetingRoomEntity> factory = new ISpringCrudifyEntityFactory<MeetingRoomEntity>() {
+	public IGGAPIEntityFactory<MeetingRoomEntity> getFactory() {
+		IGGAPIEntityFactory<MeetingRoomEntity> factory = new IGGAPIEntityFactory<MeetingRoomEntity>() {
 
 			@Override
 			public MeetingRoomEntity newInstance() {

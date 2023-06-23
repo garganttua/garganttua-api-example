@@ -1,8 +1,8 @@
 package com.garganttua.api.example;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.AbstractSpringCrudifyEntity;
-import com.garganttua.api.spec.ISpringCrudifyEntityFactory;
+import com.garganttua.api.spec.AbstractGGAPIEntity;
+import com.garganttua.api.spec.IGGAPIEntityFactory;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CarEntity extends AbstractSpringCrudifyEntity {
+public class CarEntity extends AbstractGGAPIEntity {
 	
 	@JsonProperty
 	private String name; 
 
 	@Override
-	public ISpringCrudifyEntityFactory<CarEntity> getFactory() {
-		return new ISpringCrudifyEntityFactory<CarEntity>() {
+	public IGGAPIEntityFactory<CarEntity> getFactory() {
+		return new IGGAPIEntityFactory<CarEntity>() {
 			
 			@Override
 			public CarEntity newInstance(String uuid) {

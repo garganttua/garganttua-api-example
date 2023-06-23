@@ -3,15 +3,15 @@ package com.garganttua.api.example;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.garganttua.api.spec.ISpringCrudifyDomain;
+import com.garganttua.api.spec.IGGAPIDomain;
 
 @Configuration
 public class CarsDomain  {
 
 	@Bean
-	public ISpringCrudifyDomain<CarEntity, CarDTO> carDomain(){
+	public IGGAPIDomain<CarEntity, CarDTO> carDomain(){
 
-		return new ISpringCrudifyDomain<CarEntity, CarDTO>() {
+		return new IGGAPIDomain<CarEntity, CarDTO>() {
 
 			@Override
 			public Class<CarEntity> getEntityClass() {

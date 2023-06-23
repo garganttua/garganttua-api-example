@@ -3,9 +3,9 @@ package com.garganttua.api.example;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.repository.dto.AbstractSpringCrudifyDTOObject;
-import com.garganttua.api.repository.dto.ISpringCrudifyDTOFactory;
-import com.garganttua.api.repository.dto.ISpringCrudifyDTOObject;
+import com.garganttua.api.repository.dto.AbstractGGAPIDTOObject;
+import com.garganttua.api.repository.dto.IGGAPIDTOFactory;
+import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "meetingRooms")
-public class MeetingRoomDTO extends AbstractSpringCrudifyDTOObject<MeetingRoomEntity> {
+public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 	
 	@JsonProperty
 	private String name;
@@ -49,15 +49,15 @@ public class MeetingRoomDTO extends AbstractSpringCrudifyDTOObject<MeetingRoomEn
 	}
 
 	@Override
-	public void update(ISpringCrudifyDTOObject<MeetingRoomEntity> object) {
+	public void update(IGGAPIDTOObject<MeetingRoomEntity> object) {
 		this.name = ((MeetingRoomDTO) object).getName();
 		this.location = ((MeetingRoomDTO) object).getLocation();
 		this.facilities = ((MeetingRoomDTO) object).getFacilities();
 	}
 
 	@Override
-	public ISpringCrudifyDTOFactory<MeetingRoomEntity, MeetingRoomDTO> getFactory() {
-		ISpringCrudifyDTOFactory<MeetingRoomEntity, MeetingRoomDTO> factory = new ISpringCrudifyDTOFactory<MeetingRoomEntity, MeetingRoomDTO>() {
+	public IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO> getFactory() {
+		IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO> factory = new IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO>() {
 			@Override
 			public MeetingRoomDTO newInstance(String tenantId, MeetingRoomEntity entity) {
 				return new MeetingRoomDTO(tenantId, entity);

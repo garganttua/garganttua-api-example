@@ -2,9 +2,9 @@ package com.garganttua.api.example;
 
 import java.util.Date;
 
-import com.garganttua.api.spec.AbstractSpringCrudifyEntity;
-import com.garganttua.api.spec.ISpringCrudifyEntityFactory;
-import com.garganttua.api.spec.SpringCrudifyEntity;
+import com.garganttua.api.spec.AbstractGGAPIEntity;
+import com.garganttua.api.spec.IGGAPIEntityFactory;
+import com.garganttua.api.spec.GGAPIEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,8 +17,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@SpringCrudifyEntity(dto = "org.sdc.spring.domain.crudify.example.BookingDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "bookings")
-public class BookingEntity extends AbstractSpringCrudifyEntity {
+@GGAPIEntity(dto = "org.sdc.spring.domain.crudify.example.BookingDTO", eventPublisher = "class:org.sdc.spring.domain.crudify.example.CustomEventPublisher", domain = "bookings")
+public class BookingEntity extends AbstractGGAPIEntity {
 	
 	private Date from;
 	
@@ -31,8 +31,8 @@ public class BookingEntity extends AbstractSpringCrudifyEntity {
 	private String ownerMail;
 
 	@Override
-	public ISpringCrudifyEntityFactory<BookingEntity> getFactory() {
-		return new ISpringCrudifyEntityFactory<BookingEntity>() {
+	public IGGAPIEntityFactory<BookingEntity> getFactory() {
+		return new IGGAPIEntityFactory<BookingEntity>() {
 			
 			@Override
 			public BookingEntity newInstance(String uuid) {

@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.security.authorization.ISpringCrudifyAuthorization;
-import com.garganttua.api.spec.ISpringCrudifyDomain;
-import com.garganttua.api.ws.AbstractSpringCrudifyService;
+import com.garganttua.api.security.authorization.IGGAPIAuthorization;
+import com.garganttua.api.spec.IGGAPIDomain;
+import com.garganttua.api.ws.AbstractGGAPIService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -18,9 +18,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/cars")
 @ComponentScan("org.sdc")
 @Tag(name = "cars", description = "The cars API")
-public class CarsRestService extends AbstractSpringCrudifyService<CarEntity, CarDTO> {
+public class CarsRestService extends AbstractGGAPIService<CarEntity, CarDTO> {
 
-	public CarsRestService(ISpringCrudifyDomain<CarEntity, CarDTO> domain) {
+	public CarsRestService(IGGAPIDomain<CarEntity, CarDTO> domain) {
 		super(domain);
 	}
 
@@ -38,7 +38,7 @@ public class CarsRestService extends AbstractSpringCrudifyService<CarEntity, Car
 	}
 
 	@Override
-	protected List<ISpringCrudifyAuthorization> createCustomAuthorizations() {
+	protected List<IGGAPIAuthorization> createCustomAuthorizations() {
 		// TODO Auto-generated method stub
 		return null;
 	}
