@@ -2,6 +2,7 @@ package com.garganttua.api.example;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.spec.AbstractGGAPIEntity;
+import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.IGGAPIEntityFactory;
 import com.garganttua.api.spec.GGAPIEntity;
 
@@ -16,7 +17,13 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "meetingRooms", publicEntity = true)
+@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "meetingRooms", publicEntity = true, 
+update_one_access = GGAPICrudAccess.owner,
+creation_access =  GGAPICrudAccess.authenticated,
+delete_all_access = GGAPICrudAccess.owner,
+count_access = GGAPICrudAccess.anonymous,
+read_all_access = GGAPICrudAccess.anonymous,
+read_one_access = GGAPICrudAccess.anonymous)
 public class MeetingRoomEntity extends AbstractGGAPIEntity {
 
 	@JsonProperty
