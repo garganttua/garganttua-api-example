@@ -43,8 +43,6 @@ public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 	public MeetingRoomEntity convert() {
 		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, this.location, this.facilities);
 		super.convert(mre);
-		mre.setId(this.id);
-		mre.setUuid(this.uuid);
 		return mre;
 	}
 

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
+import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.ws.AbstractGGAPIService;
 
@@ -25,22 +26,35 @@ public class CarsRestService extends AbstractGGAPIService<CarEntity, CarDTO> {
 	}
 
 	@Override
-	public void authorize(boolean authorize_creation, boolean authorize_read_all, boolean authorize_read_one,
-			boolean authorize_update_one, boolean authorize_delete_one, boolean authorize_delete_all,
-			boolean authorize_count) {
-		this.AUTHORIZE_CREATION = true;
-        this.AUTHORIZE_DELETE_ALL = true;
-        this.AUTHORIZE_DELETE_ONE = true;
-        this.AUTHORIZE_GET_ALL = true;
-        this.AUTHORIZE_GET_ONE = true;
-        this.AUTHORIZE_UPDATE = true;
-        this.AUTHORIZE_COUNT = true;
+	public void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
+			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,
+			boolean allow_count) {
+		this.ALLOW_CREATION = true;
+        this.ALLOW_DELETE_ALL = true;
+        this.ALLOW_DELETE_ONE = true;
+        this.ALLOW_GET_ALL = true;
+        this.ALLOW_GET_ONE = true;
+        this.ALLOW_UPDATE = true;
+        this.ALLOW_COUNT = true;
 	}
 
 	@Override
 	protected List<IGGAPIAuthorization> createCustomAuthorizations() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setAccesses(GGAPICrudAccess creation_access, GGAPICrudAccess read_all_access,
+			GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access, GGAPICrudAccess delete_one_access,
+			GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access) {
+		this.CREATION_ACCESS = creation_access;
+		this.GET_ALL_ACCESS = read_all_access;
+		this.GET_ONE_ACCESS = read_one_access;
+		this.UPDATE_ACCESS = update_one_access;
+		this.DELETE_ONE_ACCESS = delete_one_access;
+		this.DELETE_ALL_ACCESS = delete_all_access;
+		this.COUNT_ACCESS = count_access;
 	}
 
 }
