@@ -1,4 +1,4 @@
-package com.garganttua.api.example;
+package com.garganttua.api.example.overriding;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 

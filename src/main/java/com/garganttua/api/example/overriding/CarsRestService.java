@@ -1,4 +1,4 @@
-package com.garganttua.api.example;
+package com.garganttua.api.example.overriding;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import com.garganttua.api.ws.AbstractGGAPIService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@RestController
+//@RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/cars")
 @ComponentScan("com.garganttua")

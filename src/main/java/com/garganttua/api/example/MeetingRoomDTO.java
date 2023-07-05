@@ -41,7 +41,7 @@ public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 
 	@Override
 	public MeetingRoomEntity convert() {
-		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, this.location, this.facilities);
+		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, this.location, this.facilities, this.tenantId);
 		super.convert(mre);
 		return mre;
 	}

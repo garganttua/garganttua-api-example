@@ -1,4 +1,4 @@
-package com.garganttua.api.example;
+package com.garganttua.api.example.overriding;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.spec.AbstractGGAPIEntity;
