@@ -1,1 +1,1 @@
-# garganttua-api-example
+# Garganttua API Example Project
