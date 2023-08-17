@@ -59,7 +59,7 @@
 				<executions>
 					<execution>
 						<configuration>
-							<mainClass>org.sdc.com.garganttua.api.example.TestApplication</mainClass>
+							<mainClass>com.garganttua.api.example.TestApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>
