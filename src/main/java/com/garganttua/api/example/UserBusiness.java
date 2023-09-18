@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.business.IGGAPIBusiness;
-import com.garganttua.api.engine.IGGAPIDynamicDomainEngine;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurityHelper;
 import com.garganttua.api.spec.GGAPIEntityException;
@@ -23,16 +22,16 @@ import com.garganttua.api.spec.filter.GGAPILiteral;
 @Service
 public class UserBusiness implements IGGAPIBusiness<UserEntity> {
 
-	@Inject
+	@Autowired
 	private Optional<PasswordEncoder> passwordEncoder;
 	
-	@Inject 
-	private IGGAPIDynamicDomainEngine engine;
+	@Autowired 
+	private IGGAPIEngine engine;
 	
 	@Value("${com.garganttua.api.magicTenantId}")
 	private String magicTenantId;
 	
-	@Inject
+	@Autowired
 	private Optional<IGGAPISecurityHelper> helper;
 	
 	@SuppressWarnings("unchecked")

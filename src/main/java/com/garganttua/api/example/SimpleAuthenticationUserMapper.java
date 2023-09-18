@@ -1,11 +1,10 @@
 package com.garganttua.api.example;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.engine.IGGAPIDynamicDomainEngine;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.authentication.IGGAPISecurityException;
 import com.garganttua.api.security.authentication.dao.AbstractGGAPIAuthenticationUserMapper;
@@ -13,8 +12,8 @@ import com.garganttua.api.security.authentication.dao.AbstractGGAPIAuthenticatio
 @Service
 public class SimpleAuthenticationUserMapper extends AbstractGGAPIAuthenticationUserMapper<UserEntity> {
 	
-	@Inject
-	private IGGAPIDynamicDomainEngine engine;
+	@Autowired
+	private IGGAPIEngine engine;
 	private String magicTenantId = "0";
 
 

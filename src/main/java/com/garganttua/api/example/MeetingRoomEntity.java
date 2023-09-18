@@ -1,5 +1,7 @@
 package com.garganttua.api.example;
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.spec.AbstractGGAPIEntity;
 import com.garganttua.api.spec.GGAPICrudAccess;
@@ -18,7 +20,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "meetingRooms", publicEntity = true, showTenantId = true,
+@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", 
+eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", 
+domain = "meetingRooms", 
+publicEntity = true, 
+showTenantId = true,
 update_one_access = GGAPICrudAccess.owner,
 creation_access =  GGAPICrudAccess.authenticated,
 delete_all_access = GGAPICrudAccess.owner,
@@ -31,7 +37,7 @@ public class MeetingRoomEntity extends AbstractGGAPIEntity implements IGGAPIEnti
 	private String name;
 	
 	@JsonProperty
-	private String location;
+	private GeoJsonPoint location;
 	
 	@JsonProperty
 	private String[] facilities;
