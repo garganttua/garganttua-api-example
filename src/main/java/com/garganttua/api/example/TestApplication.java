@@ -9,13 +9,11 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 
 import com.garganttua.api.security.IGGAPISecurityHelper;
-import com.garganttua.api.security.authentication.IGGAPISecurityException;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -36,7 +34,7 @@ public class TestApplication {
 	private Optional<IGGAPISecurityHelper> securityHelper;
 
 	@Bean
-	public DefaultSecurityFilterChain configureFilterChain(HttpSecurity http) throws Exception {
+	public DefaultSecurityFilterChain configureFilterChainTest(HttpSecurity http) throws Exception {
 		http.csrf().disable()
 		.authorizeHttpRequests()
         .requestMatchers("/swagger-ui.html","/swagger-ui/**","/v3/**").permitAll().and()
@@ -44,12 +42,7 @@ public class TestApplication {
 		;
 		
 		this.securityHelper.ifPresent(securityHelper ->{
-			try {
 				securityHelper.configureFilterChain(http);
-			} catch (IGGAPISecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 		});
 		http.cors();
 		return http.build();

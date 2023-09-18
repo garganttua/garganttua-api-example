@@ -1,5 +1,8 @@
 package com.garganttua.api.example;
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +26,8 @@ public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 	private String name;
 	
 	@JsonProperty
-	private String location;
+	@GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+	private GeoJsonPoint location;
 	
 	@JsonProperty
 	private String[] facilities;
