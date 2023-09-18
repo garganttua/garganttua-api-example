@@ -11,12 +11,23 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>github garganttua api</id>
+			<name>github garganttua api</name>
+			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
 	<dependencies>
 
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 
 		<dependency>
@@ -45,10 +56,11 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.1.0</version>
+			<groupId>io.swagger.parser.v3</groupId>
+			<artifactId>swagger-parser-v3</artifactId>
+			<version>2.1.16</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -59,7 +71,8 @@
 				<executions>
 					<execution>
 						<configuration>
-							<mainClass>com.garganttua.api.example.TestApplication</mainClass>
+							<mainClass>
+								com.garganttua.api.example.TestApplication</mainClass>
 						</configuration>
 					</execution>
 				</executions>
