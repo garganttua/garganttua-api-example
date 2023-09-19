@@ -1,11 +1,13 @@
 package com.garganttua.api.example;
 
+import org.geojson.Point;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.garganttua.api.repository.dao.mongodb.GGAPIGeoJsonToMongoGeoJsonBinder;
 import com.garganttua.api.repository.dto.AbstractGGAPIDTOObject;
 import com.garganttua.api.repository.dto.IGGAPIDTOFactory;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
@@ -25,7 +27,7 @@ public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 	@JsonProperty
 	private String name;
 	
-	@JsonProperty
+	@JsonProperty	
 	@GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
 	private GeoJsonPoint location;
 	
@@ -39,13 +41,16 @@ public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
 	@Override
 	public void create(MeetingRoomEntity entity) {
 		this.name = entity.getName();
-		this.location = entity.getLocation();
+		this.location = (GeoJsonPoint) entity.getLocation().accept(new GGAPIGeoJsonToMongoGeoJsonBinder());	
 		this.facilities = entity.getFacilities();
 	}
 
 	@Override
 	public MeetingRoomEntity convert() {
-		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, this.location, this.facilities, this.tenantId);
+		
+		Point point = new Point(this.location.getCoordinates().get(0), this.location.getCoordinates().get(1));
+		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, point, this.facilities, this.tenantId);
+		
 		super.convert(mre);
 		return mre;
 	}

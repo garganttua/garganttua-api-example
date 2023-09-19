@@ -1,6 +1,6 @@
 package com.garganttua.api.example;
 
-import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.geojson.Point;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.spec.AbstractGGAPIEntity;
@@ -30,14 +30,15 @@ creation_access =  GGAPICrudAccess.authenticated,
 delete_all_access = GGAPICrudAccess.owner,
 count_access = GGAPICrudAccess.anonymous,
 read_all_access = GGAPICrudAccess.anonymous,
-read_one_access = GGAPICrudAccess.anonymous)
+read_one_access = GGAPICrudAccess.anonymous,
+geolocialized = "location")
 public class MeetingRoomEntity extends AbstractGGAPIEntity implements IGGAPIEntityWithTenant {
 
 	@JsonProperty
 	private String name;
 	
 	@JsonProperty
-	private GeoJsonPoint location;
+	private Point location;
 	
 	@JsonProperty
 	private String[] facilities;
