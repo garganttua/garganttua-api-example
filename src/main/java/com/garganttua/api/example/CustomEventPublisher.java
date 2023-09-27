@@ -24,7 +24,5 @@ public class CustomEventPublisher implements IGGAPIEventPublisher {
 		} catch (JsonProcessingException e) {
 			log.error("Error during publishing event", e);
 		}
-		
 	}
-
 }

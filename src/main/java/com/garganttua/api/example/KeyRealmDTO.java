@@ -14,13 +14,20 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "access_tokens")
-public class TokenEntity {
-
+@Document(collection = "key_realms")
+public class KeyRealmDTO {
+	
 	@Id
 	@Indexed(unique=true)
-	private String userUuid;
-
+	private String name;
+	
 	@Field
-	private String token;
+	private String algo;
+	
+	@Field
+	private KeyDTO cipheringKey;
+	
+	@Field
+	private KeyDTO uncipheringKey;
+
 }
