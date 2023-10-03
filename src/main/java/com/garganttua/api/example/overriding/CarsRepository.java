@@ -13,7 +13,7 @@ import com.garganttua.api.spec.IGGAPIDomain;
 public class CarsRepository extends GGAPIRepository<CarEntity, CarDTO> {
 
 	public CarsRepository(IGGAPIDomain<CarEntity, CarDTO> domain) {
-		super(domain);
+		super(domain, "0");
 	}
 
 }
