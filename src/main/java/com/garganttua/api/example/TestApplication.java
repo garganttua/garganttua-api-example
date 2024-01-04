@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 
+import com.garganttua.api.security.GGAPISecurityException;
 import com.garganttua.api.security.IGGAPISecurityHelper;
 
 import io.swagger.v3.oas.models.Components;
@@ -42,7 +43,12 @@ public class TestApplication {
 		;
 		
 		this.securityHelper.ifPresent(securityHelper ->{
-				securityHelper.configureFilterChain(http);
+				try {
+					securityHelper.configureFilterChain(http);
+				} catch (GGAPISecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 		});
 		http.cors();
 		return http.build();

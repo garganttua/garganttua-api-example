@@ -56,7 +56,7 @@ public class UserBusiness implements IGGAPIBusiness<UserEntity> {
 		
 		IGGAPIRepository<UserEntity, UserDto> repository = (IGGAPIRepository<UserEntity, UserDto>) this.engine.getRepository("users_repository");
 		
-		List<UserEntity> users = repository.getEntities(this.magicTenantId, 0, 0, filter, null, null);
+		List<UserEntity> users = repository.getEntities(this.magicTenantId, null, 0, 0, filter, null, null);
 		
 		if( users.size() > 0 ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "User with mail "+entity.getId()+" already exists.");
@@ -96,7 +96,7 @@ public class UserBusiness implements IGGAPIBusiness<UserEntity> {
 		
 		IGGAPIRepository<UserEntity, UserDto> repository = (IGGAPIRepository<UserEntity, UserDto>) this.engine.getRepository("users_repository");
 		
-		List<UserEntity> users = repository .getEntities(this.magicTenantId, 0, 0, filter, null, null);
+		List<UserEntity> users = repository .getEntities(this.magicTenantId, null, 0, 0, filter, null, null);
 		
 		if( users.size() > 0 ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "User with mail "+entity.getId()+" already exists.");
