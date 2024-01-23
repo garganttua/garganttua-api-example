@@ -3,11 +3,11 @@ package com.garganttua.api.example;
 import org.geojson.Point;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.AbstractGGAPIEntity;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.GGAPIEntity;
-import com.garganttua.api.spec.IGGAPIEntityFactory;
-import com.garganttua.api.spec.IGGAPIEntityWithTenant;
+import com.garganttua.api.core.AbstractGGAPIEntity;
+import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.IGGAPIEntityWithTenant;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

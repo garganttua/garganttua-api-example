@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.business.IGGAPIBusiness;
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurityHelper;
-import com.garganttua.api.spec.GGAPIEntityException;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 
 import lombok.extern.java.Log;
 
@@ -30,7 +30,7 @@ public class UserBusiness implements IGGAPIBusiness<UserEntity> {
 	@Autowired 
 	private IGGAPIEngine engine;
 	
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
 	@Autowired

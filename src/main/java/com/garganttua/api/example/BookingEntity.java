@@ -2,9 +2,9 @@ package com.garganttua.api.example;
 
 import java.util.Date;
 
-import com.garganttua.api.spec.AbstractGGAPIEntity;
-import com.garganttua.api.spec.IGGAPIEntityFactory;
-import com.garganttua.api.spec.GGAPIEntity;
+import com.garganttua.api.core.AbstractGGAPIEntity;
+import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

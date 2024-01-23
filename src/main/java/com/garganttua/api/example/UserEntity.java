@@ -3,10 +3,10 @@ package com.garganttua.api.example;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.AbstractGGAPIEntity;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.GGAPIEntity;
-import com.garganttua.api.spec.IGGAPIEntityFactory;
+import com.garganttua.api.core.AbstractGGAPIEntity;
+import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 
 import lombok.Getter;
 import lombok.Setter;

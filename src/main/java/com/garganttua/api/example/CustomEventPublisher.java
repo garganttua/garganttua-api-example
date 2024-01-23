@@ -2,9 +2,9 @@ package com.garganttua.api.example;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.events.GGAPIEvent;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.spec.IGGAPIEntity;
 
 import lombok.extern.slf4j.Slf4j;
 
