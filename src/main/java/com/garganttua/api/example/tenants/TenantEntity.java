@@ -1,17 +1,27 @@
 package com.garganttua.api.example.tenants;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.springframework.beans.factory.annotation.Value;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.AbstractGGAPIEntity;
+import com.garganttua.api.core.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.GGAPIEntityException;
 import com.garganttua.api.core.GGAPITenant;
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIEntityWithTenant;
 import com.garganttua.api.core.IGGAPITenant;
+import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.security.authentication.GGAPIAuthenticator;
 import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonExpired;
 import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonLocked;
@@ -28,7 +38,6 @@ import lombok.Setter;
 @GGAPIEntity (
 	domain = "tenants", 
 	dto = "com.garganttua.api.example.tenants.TenantDto",
-	business= "class:com.garganttua.api.example.tenants.TenantsBusiness",
 	creation_access = GGAPICrudAccess.anonymous,
 	count_access = GGAPICrudAccess.tenant,
 	delete_one_access = GGAPICrudAccess.tenant,
@@ -57,7 +66,7 @@ import lombok.Setter;
 @Getter
 @GGAPIAuthenticator
 @GGAPITenant
-public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant {
+public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant, IGGAPIEntityWithTenant {
 	
 	@GGAPIAuthenticatorLogin
 	@JsonProperty
@@ -80,7 +89,14 @@ public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant {
 	@GGAPIAuthenticatorCredentialsNonExpired
 	@GGAPIAuthenticatorEnabled
 	private boolean enabled = true;
+	
+	@Setter
+	private String tenantId;
 
+	@Inject
+	@JsonIgnore
+	private IGGAPIAccessRulesRegistry accessRulesRegistry;
+	
 	public TenantEntity(String uuid, String id, String name, String surname, String password) {
 		super(uuid, id);
 		this.uuid = uuid;
@@ -92,25 +108,24 @@ public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant {
 	}
 
 	@Override
-	public IGGAPIEntityFactory<TenantEntity> getFactory() {
-		return new IGGAPIEntityFactory<TenantEntity>() {
-			
-			@Override
-			public TenantEntity newInstance(String uuid) {
-				return new TenantEntity(uuid, null, null, null, null);
-			}
-			
-			@Override
-			public TenantEntity newInstance() {
-				return new TenantEntity();
-			}
-		};
-	}
-
-	@Override
 	@JsonIgnore
 	public boolean isSuperTenant() {
 		return false;
 	}
-	
+
+	@GGAPIEntityBeforeCreate
+	public void beforeCreate(IGGAPICaller caller, Map<String, String> parameters) throws GGAPIEntityException {
+		//Authorize everything for a new user
+		List<String> auths = new ArrayList<String>();
+		
+		this.accessRulesRegistry.getAccessRules().forEach(r -> {
+			if( r.getAuthority() != null ) {
+				auths.add(r.getAuthority());
+			}
+		});
+		
+		List<String> listWithoutDuplicates = new ArrayList<String>(new HashSet<>(auths));
+		
+		this.setUserAuthorities(listWithoutDuplicates);
+	}
 }

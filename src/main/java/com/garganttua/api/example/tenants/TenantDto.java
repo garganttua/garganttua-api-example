@@ -49,6 +49,7 @@ public class TenantDto extends AbstractGGAPIDTOObject<TenantEntity>{
 	public TenantEntity convert() {
 		TenantEntity tenantEntity = new TenantEntity(this.uuid, this.id, this.name, this.surname, this.password);
 		tenantEntity.setUserAuthorities(this.authorities);
+		tenantEntity.setTenantId(this.tenantId);
 		return tenantEntity;
 	}
 
@@ -61,17 +62,6 @@ public class TenantDto extends AbstractGGAPIDTOObject<TenantEntity>{
 //		this.password = ((TenantDto) object).password;
 		
 		this.authorities = ((TenantDto) object).authorities;
-	}
-
-	@Override
-	public IGGAPIDTOFactory<TenantEntity, TenantDto> getFactory() {
-		return new IGGAPIDTOFactory<TenantEntity, TenantDto>() {
-			
-			@Override
-			public TenantDto newInstance(String tenantId, TenantEntity entity) {
-				return new TenantDto(tenantId, entity);
-			}
-		};
 	}
 
 }
