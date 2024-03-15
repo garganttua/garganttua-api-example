@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.repository.dto.AbstractGGAPIDTOObject;
-import com.garganttua.api.repository.dto.IGGAPIDTOFactory;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.core.dto.GenericGGAPIDto;
+import com.garganttua.api.core.dto.annotations.GGAPIDto;
+import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,53 +15,27 @@ import lombok.NoArgsConstructor;
 @Getter
 @Document(collection = "tenants")
 @NoArgsConstructor
-public class TenantDto extends AbstractGGAPIDTOObject<TenantEntity>{
+@GGAPIDto(entityClass = TenantEntity.class)
+public class TenantDto extends GenericGGAPIDto {
 
 	@Field
+	@GGAPIFieldMappingRule(sourceFieldAddress = "name")
 	private String name;
 	
 	@Field
+	@GGAPIFieldMappingRule(sourceFieldAddress = "surname")
 	private String surname;
 
 	@Field
+	@GGAPIFieldMappingRule(sourceFieldAddress = "password")
 	private String password;
 	
 	@Field 
+	@GGAPIFieldMappingRule(sourceFieldAddress = "email")
 	private String email;
 	
 	@Field
+	@GGAPIFieldMappingRule(sourceFieldAddress = "userAuthorities")
 	private List<String> authorities;
-	
-	public TenantDto(String tenantId, TenantEntity entity) {
-		super(tenantId, entity);
-	}
-	
-	@Override
-	public void create(TenantEntity entity) {
-		this.name = entity.getName();
-		this.surname = entity.getSurname();
-		this.password = entity.getPassword();
-		this.authorities = entity.getUserAuthorities();
-		this.email = entity.getId();
-	}
-
-	@Override
-	public TenantEntity convert() {
-		TenantEntity tenantEntity = new TenantEntity(this.uuid, this.id, this.name, this.surname, this.password);
-		tenantEntity.setUserAuthorities(this.authorities);
-		tenantEntity.setTenantId(this.tenantId);
-		return tenantEntity;
-	}
-
-	@Override
-	public void update(IGGAPIDTOObject<TenantEntity> object) {
-		this.name = ((TenantDto) object).name;
-		this.surname = ((TenantDto) object).surname;
-		
-		//Uncomment below to authorize password update
-//		this.password = ((TenantDto) object).password;
-		
-		this.authorities = ((TenantDto) object).authorities;
-	}
 
 }

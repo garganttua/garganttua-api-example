@@ -7,20 +7,30 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.core.AbstractGGAPIEntity;
-import com.garganttua.api.core.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
-import com.garganttua.api.core.GGAPICrudAccess;
-import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.GGAPIEntityException;
-import com.garganttua.api.core.GGAPITenant;
+import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.IGGAPIEntityWithTenant;
-import com.garganttua.api.core.IGGAPITenant;
+import com.garganttua.api.core.entity.GenericGGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
+import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityAuthorizeUpdate;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityGeolocalized;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityHiddenable;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityId;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityOwner;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityOwnerId;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityPublic;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityShared;
+import com.garganttua.api.core.entity.annotations.GGAPIEntitySuperOwner;
+import com.garganttua.api.core.entity.annotations.GGAPIEntitySuperTenant;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityTenant;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityTenantId;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityUnicity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.security.authentication.GGAPIAuthenticator;
 import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonExpired;
@@ -37,14 +47,13 @@ import lombok.Setter;
 
 @GGAPIEntity (
 	domain = "tenants", 
-	dto = "com.garganttua.api.example.tenants.TenantDto",
-	creation_access = GGAPICrudAccess.anonymous,
-	count_access = GGAPICrudAccess.tenant,
-	delete_one_access = GGAPICrudAccess.tenant,
-	read_one_access = GGAPICrudAccess.tenant,
-	update_one_access = GGAPICrudAccess.tenant,
-	read_all_access = GGAPICrudAccess.tenant,
-	delete_all_access = GGAPICrudAccess.tenant,
+	creation_access = GGAPIServiceAccess.anonymous,
+	count_access = GGAPIServiceAccess.tenant,
+	delete_one_access = GGAPIServiceAccess.tenant,
+	read_one_access = GGAPIServiceAccess.tenant,
+	update_one_access = GGAPIServiceAccess.tenant,
+	read_all_access = GGAPIServiceAccess.tenant,
+	delete_all_access = GGAPIServiceAccess.tenant,
 	allow_count = true,
 	allow_creation = true,
 	allow_delete_all = true,
@@ -58,31 +67,46 @@ import lombok.Setter;
 	read_all_authority = true,
 	read_one_authority = true,
 	update_one_authority = true,
-	delete_all_authority = true,
-	unicity = {"id"},
-	mandatory = {"id", "password"}
+	delete_all_authority = true
 )
 @NoArgsConstructor
 @Getter
 @GGAPIAuthenticator
-@GGAPITenant
-public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant, IGGAPIEntityWithTenant {
+@GGAPIEntityTenant
+@GGAPIEntityOwner
+public class TenantEntity extends GenericGGAPIEntity {
+	
+	@GGAPIEntityUuid
+	@GGAPIEntityOwnerId
+	@GGAPIEntityTenantId
+	protected String uuid;
+	
+	@GGAPIEntityId
+	@GGAPIEntityUnicity
+	@GGAPIEntityMandatory
+	protected String id;
 	
 	@GGAPIAuthenticatorLogin
 	@JsonProperty
 	protected String email;
+	
 	@JsonInclude
+	@GGAPIEntityAuthorizeUpdate
 	private String name;
+	
 	@JsonInclude
 	private String surname;
+	
 	@JsonInclude
 	@GGAPIAuthenticatorPassword
+	@GGAPIEntityMandatory
 	private String password;
+	
 	@JsonInclude
 	@Setter
-	@Getter
 	@GGAPIAuthenticatorAuthorities
 	private List<String> userAuthorities;
+	
 	@JsonIgnore
 	@GGAPIAuthenticatorAccountNonExpired
 	@GGAPIAuthenticatorAccountNonLocked
@@ -90,27 +114,24 @@ public class TenantEntity extends AbstractGGAPIEntity implements IGGAPITenant, I
 	@GGAPIAuthenticatorEnabled
 	private boolean enabled = true;
 	
-	@Setter
-	private String tenantId;
+	@GGAPIEntitySuperTenant
+	private boolean superTenant;
+	
+	@GGAPIEntitySuperOwner
+	private boolean superOwner;
 
 	@Inject
 	@JsonIgnore
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 	
 	public TenantEntity(String uuid, String id, String name, String surname, String password) {
-		super(uuid, id);
 		this.uuid = uuid;
+		this.id = id;
 		this.email = id;
 		this.name = name;
 		this.surname = surname;
 		this.password = password;
 		this.userAuthorities = new ArrayList<String>();
-	}
-
-	@Override
-	@JsonIgnore
-	public boolean isSuperTenant() {
-		return false;
 	}
 
 	@GGAPIEntityBeforeCreate
