@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
@@ -20,7 +21,6 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityId;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityOwner;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityOwnerId;
-import com.garganttua.api.core.entity.annotations.GGAPIEntityPublic;
 import com.garganttua.api.core.entity.annotations.GGAPIEntitySuperOwner;
 import com.garganttua.api.core.entity.annotations.GGAPIEntitySuperTenant;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityTenant;
@@ -28,15 +28,14 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.security.authentication.GGAPIAuthenticator;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonExpired;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonLocked;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAuthorities;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorCredentialsNonExpired;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorEnabled;
-import com.garganttua.api.security.authentication.modes.loginpassword.GGAPIAuthenticatorLogin;
-import com.garganttua.api.security.authentication.modes.loginpassword.GGAPIAuthenticatorPassword;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAccountNonExpired;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAccountNonLocked;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAuthorities;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorCredentialsNonExpired;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorEnabled;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorLogin;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorPassword;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,19 +68,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @GGAPIAuthenticator
-@GGAPIEntityTenant
-@GGAPIEntityOwner
+@GGAPIEntityTenant(tenantId="uuid")
+@GGAPIEntityOwner(ownerId="uuid")
 public class TenantEntity extends GenericGGAPIEntity {
-	
-	@GGAPIEntityUuid
-	@GGAPIEntityOwnerId
-	@GGAPIEntityTenantId
-	protected String uuid;
-	
-	@GGAPIEntityId
-	@GGAPIEntityUnicity
-	@GGAPIEntityMandatory
-	protected String id;
 	
 	@GGAPIAuthenticatorLogin
 	@JsonProperty
@@ -92,6 +81,7 @@ public class TenantEntity extends GenericGGAPIEntity {
 	private String name;
 	
 	@JsonInclude
+	@GGAPIEntityAuthorizeUpdate
 	private String surname;
 	
 	@JsonInclude
