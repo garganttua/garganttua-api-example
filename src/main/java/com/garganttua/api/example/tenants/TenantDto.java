@@ -2,12 +2,13 @@ package com.garganttua.api.example.tenants;
 
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.core.dto.GenericGGAPIDto;
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
-import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,27 +16,31 @@ import lombok.NoArgsConstructor;
 @Getter
 @Document(collection = "tenants")
 @NoArgsConstructor
-@GGAPIDto(entityClass = TenantEntity.class)
-public class TenantDto extends GenericGGAPIDto {
+@GGAPIDto(entityClass = TenantEntity.class, db = "gg:SpringMongoDao")
+public class TenantDto {
 
 	@Field
-	@GGAPIFieldMappingRule(sourceFieldAddress = "name")
+	@GGFieldMappingRule(sourceFieldAddress = "name")
 	private String name;
 	
 	@Field
-	@GGAPIFieldMappingRule(sourceFieldAddress = "surname")
+	@GGFieldMappingRule(sourceFieldAddress = "surname")
 	private String surname;
 
 	@Field
-	@GGAPIFieldMappingRule(sourceFieldAddress = "password")
+	@GGFieldMappingRule(sourceFieldAddress = "password")
 	private String password;
 	
-	@Field 
-	@GGAPIFieldMappingRule(sourceFieldAddress = "email")
-	private String email;
-	
 	@Field
-	@GGAPIFieldMappingRule(sourceFieldAddress = "userAuthorities")
+	@GGFieldMappingRule(sourceFieldAddress = "userAuthorities")
 	private List<String> authorities;
+	
+	@Id
+	@GGFieldMappingRule(sourceFieldAddress = "uuid")
+	@GGAPIDtoTenantId
+	protected String uuid;
+	
+	@GGFieldMappingRule(sourceFieldAddress = "id")
+	protected String id;
 
 }

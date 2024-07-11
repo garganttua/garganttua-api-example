@@ -12,5 +12,4 @@ public class GarganttuaAPIExampleBackend {
 	public static void main(String[] args) {
 		SpringApplication.run(GarganttuaAPIExampleBackend.class, args);
 	}
-
 }
