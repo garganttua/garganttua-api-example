@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
@@ -45,7 +45,6 @@ import lombok.Setter;
 
 @GGAPIEntity (
 	domain = "tenants", 
-	allow_count = true,
 	allow_creation = true,
 	allow_delete_all = true,
 	allow_delete_one = true,
