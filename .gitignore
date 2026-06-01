@@ -23,3 +23,6 @@
 hs_err_pid*
 replay_pid*
 /target/
+
+# Benchmark build artifacts (native binary, jars, logs); benchmark.py + the PDF stay tracked
+benchmark/.work/

@@ -1,0 +1,908 @@
+{
+  "env": {
+    "cpu": "Intel(R) Core(TM) Ultra 7 165U",
+    "cores": 14,
+    "ram": "30.5 GiB",
+    "os": "Linux 6.17.0-29-generic",
+    "jdk_run": "java version \"21.0.5\" 2024-10-15 LTS",
+    "graalvm_build": "native-image 21.0.5 2024-10-15",
+    "date": "2026-06-01 18:34"
+  },
+  "n_runs": 20,
+  "warmup": 3,
+  "results": {
+    "runtime": {
+      "runs": [
+        {
+          "wall_ms": 3069.289603998186,
+          "rss_mb": 452.87109375,
+          "cpu_ms": 7720.067999999999,
+          "cpu_pct": 251.52621603199364,
+          "startup_ms": 1420.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2729.170721999253,
+          "rss_mb": 451.703125,
+          "cpu_ms": 7108.09,
+          "cpu_pct": 260.4487122298077,
+          "startup_ms": 1220.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 3081.64271399437,
+          "rss_mb": 453.4375,
+          "cpu_ms": 7789.377,
+          "cpu_pct": 252.76703767853576,
+          "startup_ms": 1390.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2686.277279004571,
+          "rss_mb": 452.21875,
+          "cpu_ms": 6964.881,
+          "cpu_pct": 259.27632469053646,
+          "startup_ms": 1200.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2790.453310997691,
+          "rss_mb": 453.515625,
+          "cpu_ms": 7105.454,
+          "cpu_pct": 254.63439836087187,
+          "startup_ms": 1280.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2679.2148489912506,
+          "rss_mb": 452.52734375,
+          "cpu_ms": 6898.366999999999,
+          "cpu_pct": 257.47718599713266,
+          "startup_ms": 1200.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2533.1646390113747,
+          "rss_mb": 450.7734375,
+          "cpu_ms": 6668.135,
+          "cpu_pct": 263.23338393837645,
+          "startup_ms": 1210.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2633.4228640043875,
+          "rss_mb": 451.03125,
+          "cpu_ms": 6913.72,
+          "cpu_pct": 262.53740310764164,
+          "startup_ms": 1220.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2607.2911670053145,
+          "rss_mb": 451.0078125,
+          "cpu_ms": 6692.663,
+          "cpu_pct": 256.6902801150155,
+          "startup_ms": 1270.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2801.907165994635,
+          "rss_mb": 454.11328125,
+          "cpu_ms": 7075.896999999999,
+          "cpu_pct": 252.5385953495059,
+          "startup_ms": 1310.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2648.255624997546,
+          "rss_mb": 451.80859375,
+          "cpu_ms": 6796.424,
+          "cpu_pct": 256.6377632071035,
+          "startup_ms": 1240.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2746.2506360025145,
+          "rss_mb": 453.11328125,
+          "cpu_ms": 7046.982999999999,
+          "cpu_pct": 256.6037821754572,
+          "startup_ms": 1280.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2615.100417009671,
+          "rss_mb": 450.98046875,
+          "cpu_ms": 6772.088,
+          "cpu_pct": 258.96091622148043,
+          "startup_ms": 1170.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2471.6563419933664,
+          "rss_mb": 452.34765625,
+          "cpu_ms": 6483.423,
+          "cpu_pct": 262.31085971972885,
+          "startup_ms": 1150.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2914.472100994317,
+          "rss_mb": 454.98828125,
+          "cpu_ms": 7369.769,
+          "cpu_pct": 252.86805790611928,
+          "startup_ms": 1320.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2721.2111830012873,
+          "rss_mb": 451.26953125,
+          "cpu_ms": 7015.103,
+          "cpu_pct": 257.79340625312585,
+          "startup_ms": 1240.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2539.3467640096787,
+          "rss_mb": 450.671875,
+          "cpu_ms": 6649.641,
+          "cpu_pct": 261.8642358832507,
+          "startup_ms": 1120.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2843.008538999129,
+          "rss_mb": 451.171875,
+          "cpu_ms": 7231.4039999999995,
+          "cpu_pct": 254.35744918816843,
+          "startup_ms": 1300.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2804.912884996156,
+          "rss_mb": 449.1875,
+          "cpu_ms": 7107.857999999999,
+          "cpu_pct": 253.40744227818467,
+          "startup_ms": 1240.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2871.0385970043717,
+          "rss_mb": 452.3125,
+          "cpu_ms": 7216.474,
+          "cpu_pct": 251.35412695355734,
+          "startup_ms": 1340.0,
+          "ok": true
+        }
+      ],
+      "artifact_size": 6073272
+    },
+    "aot": {
+      "runs": [
+        {
+          "wall_ms": 2368.5528990026796,
+          "rss_mb": 445.80859375,
+          "cpu_ms": 6142.35,
+          "cpu_pct": 259.3292302057659,
+          "startup_ms": 863.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2410.1207889907528,
+          "rss_mb": 446.00390625,
+          "cpu_ms": 6213.514999999999,
+          "cpu_pct": 257.80927779150574,
+          "startup_ms": 933.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2432.683813996846,
+          "rss_mb": 446.5234375,
+          "cpu_ms": 6215.773999999999,
+          "cpu_pct": 255.5109695816827,
+          "startup_ms": 907.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2218.6003889946733,
+          "rss_mb": 444.08203125,
+          "cpu_ms": 5802.415999999999,
+          "cpu_pct": 261.5349762301845,
+          "startup_ms": 838.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2574.1269199934322,
+          "rss_mb": 450.03125,
+          "cpu_ms": 6466.717,
+          "cpu_pct": 251.21981941809221,
+          "startup_ms": 924.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2455.2980099979322,
+          "rss_mb": 444.4609375,
+          "cpu_ms": 6314.409000000001,
+          "cpu_pct": 257.1748510481348,
+          "startup_ms": 899.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2394.7960960067576,
+          "rss_mb": 446.078125,
+          "cpu_ms": 6158.315,
+          "cpu_pct": 257.1540437312715,
+          "startup_ms": 890.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2361.5947650105227,
+          "rss_mb": 445.01953125,
+          "cpu_ms": 6144.082,
+          "cpu_pct": 260.16665056304123,
+          "startup_ms": 838.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2439.690483995946,
+          "rss_mb": 447.4765625,
+          "cpu_ms": 6228.481000000001,
+          "cpu_pct": 255.2979995150217,
+          "startup_ms": 904.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2226.3851939933375,
+          "rss_mb": 444.4453125,
+          "cpu_ms": 5785.636,
+          "cpu_pct": 259.86680182788325,
+          "startup_ms": 851.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2267.637142998865,
+          "rss_mb": 447.79296875,
+          "cpu_ms": 5960.9259999999995,
+          "cpu_pct": 262.8694814954785,
+          "startup_ms": 814.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2281.0608190047788,
+          "rss_mb": 446.78125,
+          "cpu_ms": 5945.705,
+          "cpu_pct": 260.6552596258304,
+          "startup_ms": 836.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2219.300469994778,
+          "rss_mb": 446.5078125,
+          "cpu_ms": 5746.284000000001,
+          "cpu_pct": 258.9232092585247,
+          "startup_ms": 821.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2436.3442540052347,
+          "rss_mb": 446.40234375,
+          "cpu_ms": 6367.664,
+          "cpu_pct": 261.3614225301643,
+          "startup_ms": 938.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2524.3597680091625,
+          "rss_mb": 444.796875,
+          "cpu_ms": 6431.455,
+          "cpu_pct": 254.7756893254629,
+          "startup_ms": 991.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2304.836683004396,
+          "rss_mb": 448.0,
+          "cpu_ms": 5930.534,
+          "cpu_pct": 257.30820945931157,
+          "startup_ms": 908.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2513.750730009633,
+          "rss_mb": 447.28515625,
+          "cpu_ms": 6332.92,
+          "cpu_pct": 251.93110535569022,
+          "startup_ms": 911.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2397.262394995778,
+          "rss_mb": 448.9296875,
+          "cpu_ms": 6057.134999999999,
+          "cpu_pct": 252.6688364462776,
+          "startup_ms": 948.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2540.3448099968955,
+          "rss_mb": 446.9296875,
+          "cpu_ms": 6317.834,
+          "cpu_pct": 248.69986055191146,
+          "startup_ms": 975.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 2323.4889899904374,
+          "rss_mb": 445.07421875,
+          "cpu_ms": 5923.148999999999,
+          "cpu_pct": 254.92477156194212,
+          "startup_ms": 896.0,
+          "ok": true
+        }
+      ],
+      "artifact_size": 5260166
+    },
+    "native": {
+      "runs": [
+        {
+          "wall_ms": 558.2184359955136,
+          "rss_mb": 144.12109375,
+          "cpu_ms": 551.688,
+          "cpu_pct": 98.83012892903342,
+          "startup_ms": 239.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 532.8396820113994,
+          "rss_mb": 145.42578125,
+          "cpu_ms": 531.914,
+          "cpu_pct": 99.82627382256796,
+          "startup_ms": 225.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 546.2830559990834,
+          "rss_mb": 141.41796875,
+          "cpu_ms": 545.712,
+          "cpu_pct": 99.89546518186637,
+          "startup_ms": 223.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 559.3559349945281,
+          "rss_mb": 144.98046875,
+          "cpu_ms": 558.951,
+          "cpu_pct": 99.92760691910205,
+          "startup_ms": 240.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 570.4691470018588,
+          "rss_mb": 135.171875,
+          "cpu_ms": 569.7280000000001,
+          "cpu_pct": 99.87008114185423,
+          "startup_ms": 249.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 555.905820991029,
+          "rss_mb": 140.1015625,
+          "cpu_ms": 555.3979999999999,
+          "cpu_pct": 99.90864981587639,
+          "startup_ms": 227.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 538.5698080062866,
+          "rss_mb": 140.203125,
+          "cpu_ms": 537.362,
+          "cpu_pct": 99.77573789166574,
+          "startup_ms": 226.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 536.318943995866,
+          "rss_mb": 142.32421875,
+          "cpu_ms": 533.803,
+          "cpu_pct": 99.53088660692816,
+          "startup_ms": 221.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 538.0806860048324,
+          "rss_mb": 111.74609375,
+          "cpu_ms": 537.3829999999999,
+          "cpu_pct": 99.87033803238458,
+          "startup_ms": 239.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 549.0551780094393,
+          "rss_mb": 141.3203125,
+          "cpu_ms": 542.979,
+          "cpu_pct": 98.8933392757595,
+          "startup_ms": 231.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 530.037659991649,
+          "rss_mb": 129.37109375,
+          "cpu_ms": 529.86,
+          "cpu_pct": 99.9664816285598,
+          "startup_ms": 228.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 599.0889419917949,
+          "rss_mb": 140.58203125,
+          "cpu_ms": 582.5859999999999,
+          "cpu_pct": 97.24532688970564,
+          "startup_ms": 230.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 566.9414570002118,
+          "rss_mb": 131.58203125,
+          "cpu_ms": 566.722,
+          "cpu_pct": 99.96129106497645,
+          "startup_ms": 257.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 538.6940070020501,
+          "rss_mb": 142.40625,
+          "cpu_ms": 538.209,
+          "cpu_pct": 99.9099661411217,
+          "startup_ms": 229.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 555.6292690016562,
+          "rss_mb": 141.11328125,
+          "cpu_ms": 550.232,
+          "cpu_pct": 99.02862046642107,
+          "startup_ms": 229.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 535.831753993989,
+          "rss_mb": 141.55078125,
+          "cpu_ms": 535.635,
+          "cpu_pct": 99.96328063939428,
+          "startup_ms": 219.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 583.1514010060346,
+          "rss_mb": 133.23828125,
+          "cpu_ms": 582.7349999999999,
+          "cpu_pct": 99.92859470022428,
+          "startup_ms": 225.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 541.8667580088368,
+          "rss_mb": 141.37109375,
+          "cpu_ms": 541.384,
+          "cpu_pct": 99.91090835492277,
+          "startup_ms": 230.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 540.652923999005,
+          "rss_mb": 140.9296875,
+          "cpu_ms": 540.093,
+          "cpu_pct": 99.89643559219776,
+          "startup_ms": 229.0,
+          "ok": true
+        },
+        {
+          "wall_ms": 539.4284140056698,
+          "rss_mb": 129.6796875,
+          "cpu_ms": 539.0509999999999,
+          "cpu_pct": 99.93003445946289,
+          "startup_ms": 223.0,
+          "ok": true
+        }
+      ],
+      "artifact_size": 37135936
+    }
+  },
+  "obs": {
+    "runtime": {
+      "ops": {
+        "api:operation:users:users-create-one-user": {
+          "cnt": 4,
+          "ok": 4,
+          "ko": 0,
+          "avg": 105210
+        },
+        "api:operation:tenants:tenants-read-one-tenant": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 93660
+        },
+        "api:operation:tenants:tenants-read-all-tenants": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 79234
+        },
+        "api:operation:tenants:tenants-create-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 155982
+        },
+        "api:operation:tenants:tenants-update-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 79923
+        },
+        "api:operation:tenants:tenants-delete-all-tenants": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 55108
+        },
+        "api:operation:tenants:tenants-delete-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 51675
+        }
+      },
+      "stages": {
+        "stage:create-authorization": {
+          "cnt": 8,
+          "avg": 26678
+        },
+        "stage:exit-code": {
+          "cnt": 24,
+          "avg": 8876
+        },
+        "stage:verify-authorization": {
+          "cnt": 24,
+          "avg": 5757
+        },
+        "stage:readAll": {
+          "cnt": 24,
+          "avg": 5514
+        },
+        "stage:protocol-extract": {
+          "cnt": 24,
+          "avg": 5432
+        },
+        "stage:update": {
+          "cnt": 24,
+          "avg": 5322
+        },
+        "stage:create": {
+          "cnt": 24,
+          "avg": 5256
+        },
+        "stage:deleteOne": {
+          "cnt": 24,
+          "avg": 4291
+        },
+        "stage:tenant-rules": {
+          "cnt": 24,
+          "avg": 4244
+        },
+        "stage:deleteAll": {
+          "cnt": 24,
+          "avg": 4012
+        },
+        "stage:verify-tenant": {
+          "cnt": 24,
+          "avg": 3718
+        },
+        "stage:verify-authority": {
+          "cnt": 24,
+          "avg": 3708
+        },
+        "stage:deserialize": {
+          "cnt": 24,
+          "avg": 3488
+        },
+        "stage:readOne": {
+          "cnt": 24,
+          "avg": 3343
+        },
+        "stage:refreshAuthorization": {
+          "cnt": 8,
+          "avg": 7062
+        },
+        "stage:authenticate": {
+          "cnt": 8,
+          "avg": 6587
+        },
+        "stage:serialize": {
+          "cnt": 24,
+          "avg": 2130
+        },
+        "stage:protocol-response": {
+          "cnt": 24,
+          "avg": 1978
+        },
+        "stage:init-codes": {
+          "cnt": 24,
+          "avg": 1725
+        },
+        "stage:verify-owner": {
+          "cnt": 8,
+          "avg": 4243
+        },
+        "stage:owner-rules": {
+          "cnt": 8,
+          "avg": 2204
+        }
+      }
+    },
+    "aot": {
+      "ops": {
+        "api:operation:users:users-create-one-user": {
+          "cnt": 4,
+          "ok": 4,
+          "ko": 0,
+          "avg": 84954
+        },
+        "api:operation:tenants:tenants-create-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 125772
+        },
+        "api:operation:tenants:tenants-read-all-tenants": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 58982
+        },
+        "api:operation:tenants:tenants-read-one-tenant": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 51079
+        },
+        "api:operation:tenants:tenants-update-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 54899
+        },
+        "api:operation:tenants:tenants-delete-all-tenants": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 51988
+        },
+        "api:operation:tenants:tenants-delete-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 49728
+        }
+      },
+      "stages": {
+        "stage:create-authorization": {
+          "cnt": 8,
+          "avg": 20004
+        },
+        "stage:exit-code": {
+          "cnt": 24,
+          "avg": 5625
+        },
+        "stage:verify-authorization": {
+          "cnt": 24,
+          "avg": 4600
+        },
+        "stage:update": {
+          "cnt": 24,
+          "avg": 4100
+        },
+        "stage:protocol-extract": {
+          "cnt": 24,
+          "avg": 4056
+        },
+        "stage:readAll": {
+          "cnt": 24,
+          "avg": 3966
+        },
+        "stage:create": {
+          "cnt": 24,
+          "avg": 3813
+        },
+        "stage:tenant-rules": {
+          "cnt": 24,
+          "avg": 3655
+        },
+        "stage:deserialize": {
+          "cnt": 24,
+          "avg": 3294
+        },
+        "stage:deleteOne": {
+          "cnt": 24,
+          "avg": 3207
+        },
+        "stage:verify-tenant": {
+          "cnt": 24,
+          "avg": 3050
+        },
+        "stage:verify-authority": {
+          "cnt": 24,
+          "avg": 3006
+        },
+        "stage:readOne": {
+          "cnt": 24,
+          "avg": 2844
+        },
+        "stage:deleteAll": {
+          "cnt": 24,
+          "avg": 2810
+        },
+        "stage:authenticate": {
+          "cnt": 8,
+          "avg": 6055
+        },
+        "stage:serialize": {
+          "cnt": 24,
+          "avg": 1613
+        },
+        "stage:protocol-response": {
+          "cnt": 24,
+          "avg": 1558
+        },
+        "stage:refreshAuthorization": {
+          "cnt": 8,
+          "avg": 4513
+        },
+        "stage:init-codes": {
+          "cnt": 24,
+          "avg": 1289
+        },
+        "stage:verify-owner": {
+          "cnt": 8,
+          "avg": 2837
+        },
+        "stage:owner-rules": {
+          "cnt": 8,
+          "avg": 1868
+        }
+      }
+    },
+    "native": {
+      "ops": {
+        "api:operation:users:users-create-one-user": {
+          "cnt": 4,
+          "ok": 4,
+          "ko": 0,
+          "avg": 29068
+        },
+        "api:operation:tenants:tenants-read-all-tenants": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 21501
+        },
+        "api:operation:tenants:tenants-read-one-tenant": {
+          "cnt": 2,
+          "ok": 2,
+          "ko": 0,
+          "avg": 16575
+        },
+        "api:operation:tenants:tenants-create-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 18821
+        },
+        "api:operation:tenants:tenants-delete-all-tenants": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 17690
+        },
+        "api:operation:tenants:tenants-delete-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 16042
+        },
+        "api:operation:tenants:tenants-update-one-tenant": {
+          "cnt": 1,
+          "ok": 1,
+          "ko": 0,
+          "avg": 15938
+        }
+      },
+      "stages": {
+        "stage:update": {
+          "cnt": 24,
+          "avg": 2634
+        },
+        "stage:create": {
+          "cnt": 24,
+          "avg": 2334
+        },
+        "stage:protocol-extract": {
+          "cnt": 24,
+          "avg": 1671
+        },
+        "stage:deleteOne": {
+          "cnt": 24,
+          "avg": 1307
+        },
+        "stage:exit-code": {
+          "cnt": 24,
+          "avg": 1271
+        },
+        "stage:readAll": {
+          "cnt": 24,
+          "avg": 1261
+        },
+        "stage:verify-authorization": {
+          "cnt": 24,
+          "avg": 1245
+        },
+        "stage:deleteAll": {
+          "cnt": 24,
+          "avg": 1132
+        },
+        "stage:tenant-rules": {
+          "cnt": 24,
+          "avg": 1109
+        },
+        "stage:refreshAuthorization": {
+          "cnt": 8,
+          "avg": 2890
+        },
+        "stage:readOne": {
+          "cnt": 24,
+          "avg": 915
+        },
+        "stage:deserialize": {
+          "cnt": 24,
+          "avg": 780
+        },
+        "stage:verify-authority": {
+          "cnt": 24,
+          "avg": 740
+        },
+        "stage:create-authorization": {
+          "cnt": 8,
+          "avg": 2191
+        },
+        "stage:verify-tenant": {
+          "cnt": 24,
+          "avg": 703
+        },
+        "stage:authenticate": {
+          "cnt": 8,
+          "avg": 1895
+        },
+        "stage:protocol-response": {
+          "cnt": 24,
+          "avg": 395
+        },
+        "stage:serialize": {
+          "cnt": 24,
+          "avg": 324
+        },
+        "stage:owner-rules": {
+          "cnt": 8,
+          "avg": 921
+        },
+        "stage:verify-owner": {
+          "cnt": 8,
+          "avg": 748
+        },
+        "stage:init-codes": {
+          "cnt": 24,
+          "avg": 150
+        }
+      }
+    }
+  }
+}

@@ -104,18 +104,22 @@ mvn -Dreflection=native clean package -DskipTests
 ### Temporary overrides
 
 `src/main/resources/META-INF/native-image/com.garganttua.api/garganttua-api-example-overrides/`
-holds two files that complete the native config until some framework modules
-ship their AOT descriptors:
+holds two minimal files that complete the native config until the last framework
+gaps close:
 
-- `reflect-config.json` — declares core/api classes resolved reflectively at
-  runtime but without an AOT descriptor (`ExpressionContext`, `Expressions`,
-  `ObservabilityExpressions`, `Authentication`, …).
+- `reflect-config.json` — a single entry for
+  `com.garganttua.api.commons.security.authentication.Authentication`. It is a
+  workflow step *output type*, resolved via `AOTClass.getTypeResolved` (not the
+  `@Expression` scan), and `garganttua-api-commons` ships no AOT descriptor for
+  it. Removable once api-commons is built native-ready (see below). The former
+  expression/observability entries are gone — the AOT annotation index now
+  registers `man`/`string`/`observe` on its own.
 - `resource-config.json` — bundles `META-INF/garganttua/index/.*` (the annotation
   indices) as resources, needed by the `@ChildContext` / `@Expression` scans at
-  native runtime.
+  native runtime. Removable once `AggregateAOTRegistryMojo` includes that pattern.
 
-These overrides disappear once the framework modules are native-ready (see
-*Known gaps → Native readiness*). Do not remove them before then.
+The `.gs` workflow scripts no longer need an override: `garganttua-api-core`
+now ships its own `resource-config.json` declaring them.
 
 ### Troubleshooting
 
@@ -126,6 +130,29 @@ These overrides disappear once the framework modules are native-ready (see
 | `NoSuchMethodException: <name>` at startup | framework class resolved reflectively, no descriptor nor reflect-config entry | add the class to the override `reflect-config.json` |
 | `No child context factory registered for …` | annotation index not bundled as a resource | check the override `resource-config.json` (`META-INF/garganttua/index/.*`) |
 | `Cannot resolve class: <fqn>` (`AOTClass.getTypeResolved`) | a step's output type isn't registered for native reflection | declare `<fqn>` in the override `reflect-config.json` |
+
+## Benchmark des modes de réflexion
+
+`benchmark/benchmark.py` construit les trois artefacts (runtime / aot / native),
+exécute chacun N fois (défaut 20) en mesurant **temps mur, CPU, RSS pic et
+démarrage**, capture les **timings du pipeline** et les **stats d'exécution**, et
+produit `reflection-benchmark.pdf` (4 pages).
+
+```bash
+python3 benchmark/benchmark.py                 # 20 runs/mode
+python3 benchmark/benchmark.py --runs 30 --warmup 5
+python3 benchmark/benchmark.py --skip-build    # réutilise benchmark/.work/
+python3 benchmark/benchmark.py --modes aot,native
+```
+
+Prérequis : un JDK GraalVM 21 (auto-détecté sous `~/.sdkman/.../​*graal*` ou via
+`$GRAALVM_HOME`) ; `matplotlib` (auto-installé si absent). Résultats bruts dans
+`benchmark/results.{csv,json}`.
+
+Ordre de grandeur observé (Intel Ultra 7 165U, 14 cœurs) : **native ~3–4× plus
+rapide** (temps mur), **~15× moins de CPU** (mono-cœur vs JVM JIT+GC multi-cœurs)
+et **~3× moins de RAM** que `runtime` ; `aot` améliore startup et CPU mais garde
+l'empreinte RAM d'une JVM.
 
 ## Layout
 
