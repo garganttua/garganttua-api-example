@@ -1,38 +1,28 @@
 package com.garganttua.api.example;
 
-import java.util.List;
-
-import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected(
         allDeclaredFields = true,
         queryAllDeclaredMethods = true,
         queryAllDeclaredConstructors = true)
-public class UserDto {
+public class User {
 
-    @FieldMappingRule(sourceFieldAddress = "id")
 String id;
-    @FieldMappingRule(sourceFieldAddress = "uuid")
 String uuid;
-    @FieldMappingRule(sourceFieldAddress = "tenantId")
 String tenantId;
-    @FieldMappingRule(sourceFieldAddress = "login")
-String login;
-    @FieldMappingRule(sourceFieldAddress = "passwordHash")
-String passwordHash;
-    @FieldMappingRule(sourceFieldAddress = "authorities")
-List<String> authorities;
-    @FieldMappingRule(sourceFieldAddress = "enabled")
-Boolean enabled;
-    @FieldMappingRule(sourceFieldAddress = "accountNonLocked")
-Boolean accountNonLocked;
-    @FieldMappingRule(sourceFieldAddress = "accountNonExpired")
-Boolean accountNonExpired;
-    @FieldMappingRule(sourceFieldAddress = "credentialsNonExpired")
-Boolean credentialsNonExpired;
 
-    public UserDto() {}
+String login;
+String passwordHash;
+
+Boolean enabled = true;
+Boolean accountNonLocked = true;
+Boolean accountNonExpired = true;
+Boolean credentialsNonExpired = true;
+
+java.util.List<String> authorities;
+
+    public User() {}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -40,12 +30,12 @@ Boolean credentialsNonExpired;
     public void setUuid(String uuid) { this.uuid = uuid; }
     public String getTenantId() { return tenantId; }
     public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+
     public String getLogin() { return login; }
     public void setLogin(String login) { this.login = login; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-    public List<String> getAuthorities() { return authorities; }
-    public void setAuthorities(List<String> authorities) { this.authorities = authorities; }
+
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
     public Boolean getAccountNonLocked() { return accountNonLocked; }
@@ -54,4 +44,23 @@ Boolean credentialsNonExpired;
     public void setAccountNonExpired(Boolean v) { this.accountNonExpired = v; }
     public Boolean getCredentialsNonExpired() { return credentialsNonExpired; }
     public void setCredentialsNonExpired(Boolean v) { this.credentialsNonExpired = v; }
+
+    public java.util.List<String> getAuthorities() { return authorities; }
+    public void setAuthorities(java.util.List<String> authorities) { this.authorities = authorities; }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", tenantId='" + tenantId + '\'' +
+                ", login='" + login + '\'' +
+                ", passwordHash=" + (passwordHash == null ? "null" : "***") +
+                ", enabled=" + enabled +
+                ", accountNonLocked=" + accountNonLocked +
+                ", accountNonExpired=" + accountNonExpired +
+                ", credentialsNonExpired=" + credentialsNonExpired +
+                ", authorities=" + authorities +
+                '}';
+    }
 }

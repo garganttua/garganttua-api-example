@@ -1,0 +1,37 @@
+{
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.compile.compilerArgs": ["--enable-preview"],
+  "java.debug.settings.vmArgs": "--enable-preview",
+  "java.jdt.ls.java.home": "/home/jeremy/.sdkman/candidates/java/21.0.6-tem",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/home/jeremy/.sdkman/candidates/java/21.0.6-tem",
+      "default": true
+    }
+  ],
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/.archive-v1/**",
+    "**/target/**"
+  ],
+  "java.autobuild.enabled": false,
+  "files.watcherExclude": {
+    "**/target/**": true,
+    "**/.archive-v1/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/target": true,
+    "**/.archive-v1": true
+  },
+  "files.exclude": {
+    "**/target": true
+  }
+}

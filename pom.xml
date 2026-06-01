@@ -1,20 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>com.garganttua.api</groupId>
 	<artifactId>garganttua-api-example</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>3.0.0-ALPHA01</version>
+	<packaging>jar</packaging>
+
+	<name>garganttua-api-example</name>
+	<description>Standalone example of garganttua-api v3 with multi-tenancy, authenticator, signed authorizations and per-user keys.</description>
+
+	<!--
+	  Reflection mode is selected via -Dreflection=<mode>, where <mode> is one of:
+	    aot      → AOT providers only. Pulls garganttua-starter-aot.
+	    runtime  → JDK-reflection + classpath scanner. Pulls garganttua-starter-runtime.
+	    hybrid   → both stacks. AOT @20 wins for @Reflected user types,
+	               runtime @10 catches the rest. Default when -Dreflection
+	               is not set. Pulls garganttua-starter-hybrid.
+	    native   → AOT + GraalVM Feature for native-image. Pulls
+	               garganttua-starter-native. The consumer is still expected
+	               to add org.graalvm.buildtools:native-maven-plugin to its
+	               build to actually produce a binary.
+
+	  Each profile contributes a single starter dep — no SPI artefacts are
+	  listed individually. The matrix of providers/scanners on the runtime
+	  classpath is controlled entirely by the starter chosen.
+
+	  Usage:
+	    mvn clean package                       # → hybrid (default)
+	    mvn clean package -Dreflection=aot      # → full AOT
+	    mvn clean package -Dreflection=runtime  # → full runtime reflection
+	    mvn clean package -Dreflection=hybrid   # → explicit hybrid
+	    mvn clean package -Dreflection=native   # → AOT + native-image config
+	-->
 
 	<properties>
-		<spring.version>3.0.5</spring.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>21</java.version>
+		<garganttua.api.version>3.0.0-ALPHA01</garganttua.api.version>
+		<garganttua.core.version>2.0.0-ALPHA02</garganttua.core.version>
+
+		<lombok.version>1.18.30</lombok.version>
+		<slf4j.version>2.0.13</slf4j.version>
+		<native.maven.plugin.version>0.10.6</native.maven.plugin.version>
+
+		<!-- Drives the AOT processor's DirectBinderGenerator. true in
+		     aot/hybrid/native modes (emits AOTClass_*.java), overridden to
+		     false in the reflection-runtime profile where the binders are
+		     dead weight. -->
+		<garganttua.direct.binders>true</garganttua.direct.binders>
 	</properties>
 
 	<repositories>
 		<repository>
-			<id>github garganttua api</id>
-			<name>github garganttua api</name>
+			<id>github-garganttua-core</id>
+			<url>https://maven.pkg.github.com/garganttua/garganttua-core</url>
+		</repository>
+		<repository>
+			<id>github-garganttua-api</id>
 			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
 			<snapshots>
 				<enabled>true</enabled>
@@ -23,77 +68,542 @@
 	</repositories>
 
 	<dependencies>
-
+		<!-- mode-agnostic api/core deps -->
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api</artifactId>
-			<version>1.0.1</version>
+			<artifactId>garganttua-api-commons</artifactId>
+			<version>${garganttua.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-core</artifactId>
+			<version>${garganttua.api.version}</version>
+			<exclusions>
+				<!-- api-core depends on garganttua-aot-reflection directly.
+				     Excluded here so the AOT provider is opt-in via the
+				     starter (aot / hybrid / native modes), and does NOT
+				     leak into runtime mode. To be removed once api-core
+				     stops pinning the SPI provider artefact directly. -->
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-aot-reflection</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-reflection</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-runtime</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-injection</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-mapper</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-workflow</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-script</artifactId>
+			<version>${garganttua.core.version}</version>
+			<!-- Exclude Logback so slf4j-simple (configured via
+			     simplelogger.properties) is the only SLF4J provider. -->
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-execution</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-commons</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-crypto</artifactId>
+			<version>${garganttua.core.version}</version>
 		</dependency>
 
+		<!-- third-party -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
 			<scope>provided</scope>
-			<version>1.18.26</version>
 		</dependency>
-
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-mongodb</artifactId>
-			<version>${spring.version}</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>${slf4j.version}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
-			<version>${spring.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.swagger.parser.v3</groupId>
-			<artifactId>swagger-parser-v3</artifactId>
-			<version>2.1.16</version>
-		</dependency>
-
 	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>reflection-aot</id>
+			<activation>
+				<property>
+					<name>reflection</name>
+					<value>aot</value>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-starter-aot</artifactId>
+					<version>${garganttua.core.version}</version>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<id>reflection-runtime</id>
+			<activation>
+				<property>
+					<name>reflection</name>
+					<value>runtime</value>
+				</property>
+			</activation>
+			<properties>
+				<garganttua.direct.binders>false</garganttua.direct.binders>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-starter-runtime</artifactId>
+					<version>${garganttua.core.version}</version>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<id>reflection-hybrid-default</id>
+			<activation>
+				<property>
+					<name>!reflection</name>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-starter-hybrid</artifactId>
+					<version>${garganttua.core.version}</version>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>reflection-hybrid-explicit</id>
+			<activation>
+				<property>
+					<name>reflection</name>
+					<value>hybrid</value>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-starter-hybrid</artifactId>
+					<version>${garganttua.core.version}</version>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<id>reflection-native</id>
+			<activation>
+				<property>
+					<name>reflection</name>
+					<value>native</value>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-starter-native</artifactId>
+					<version>${garganttua.core.version}</version>
+					<type>pom</type>
+				</dependency>
+			</dependencies>
+			<!-- GraalVM build plugin. The starter only brings the AOT Feature
+			     (auto-activated via META-INF/native-image); the consumer wires
+			     the plugin itself (cf. garganttua-starter-native README). Must
+			     run on a GraalVM JDK 21+ (e.g. JAVA_HOME=~/.sdkman/.../21.0.2-graalce).
+			     the enable-preview buildArg mirrors the compiler flag. -->
+			<build>
+				<plugins>
+					<!-- garganttua-core's AOT registry aggregator: scans the compiled
+					     AOT descriptors (entities, DTOs, business classes…) and emits
+					     META-INF/native-image/<g>/<a>/{reflect-config,resource-config}.json,
+					     consumed automatically by native-image. Declares the consumer's
+					     entities/DTOs for native reflection from the same AOT source of
+					     truth — no hand-written JSON. -->
+					<plugin>
+						<groupId>com.garganttua.core</groupId>
+						<artifactId>garganttua-aot-maven-plugin</artifactId>
+						<version>${garganttua.core.version}</version>
+						<executions>
+							<execution>
+								<id>aggregate-aot-registry</id>
+								<goals>
+									<!-- aggregate-index: merge every dependency JAR's
+									     META-INF/garganttua/index/<annotation> into this module's
+									     output, so the native build sees the COMPLETE annotation
+									     index (classpath would otherwise shadow same-path index
+									     files across jars — e.g. @ChildContext RuntimeContextFactory).
+									     aggregate-registry: emit reflect-config/resource-config. -->
+									<goal>aggregate-index</goal>
+									<goal>aggregate-registry</goal>
+								</goals>
+								<phase>process-classes</phase>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.graalvm.buildtools</groupId>
+						<artifactId>native-maven-plugin</artifactId>
+						<version>${native.maven.plugin.version}</version>
+						<extensions>true</extensions>
+						<executions>
+							<execution>
+								<id>build-native</id>
+								<goals>
+									<goal>compile-no-fork</goal>
+								</goals>
+								<phase>package</phase>
+							</execution>
+						</executions>
+						<configuration>
+							<imageName>garganttua-api-example</imageName>
+							<mainClass>com.garganttua.api.example.ExampleApplication</mainClass>
+							<buildArgs>
+								<buildArg>--enable-preview</buildArg>
+								<buildArg>--no-fallback</buildArg>
+							</buildArgs>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<configuration>
-							<mainClass>
-								com.garganttua.api.example.TestApplication</mainClass>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
 				<configuration>
-					<source>18</source>
-					<target>18</target>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgs>
+						<arg>-parameters</arg>
+						<!-- garganttua-core 2.0.0-ALPHA02 ships classes built
+						     with Java 21 preview features. Mirror the flag
+						     at compile time so the IDE picks it up via the
+						     Maven import. -->
+						<arg>--enable-preview</arg>
+						<!-- Drives DirectBinderGenerator. Property is overridden
+						     to false in the reflection-runtime profile. -->
+						<arg>-Agarganttua.direct.binders=${garganttua.direct.binders}</arg>
+					</compilerArgs>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+						<path>
+							<groupId>com.garganttua.core</groupId>
+							<artifactId>garganttua-aot-annotation-processor</artifactId>
+							<version>${garganttua.core.version}</version>
+						</path>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<!-- Run with: mvn exec:exec
+				     garganttua-core 2.0.0-ALPHA02 compiles some classes
+				     with Java 21 preview features, so the runtime JVM
+				     needs the enable-preview flag. That flag can only
+				     be passed via exec:exec (which forks a JVM), not
+				     exec:java (which reuses Maven's JVM). -->
+				<configuration>
+					<executable>java</executable>
+					<arguments>
+						<argument>--enable-preview</argument>
+						<!-- slf4j-simple reads simplelogger.properties via
+						     the system classloader, which under exec
+						     doesn't see project resources. Push the
+						     settings in as -D flags so the
+						     LoggingObserver output is visible. -->
+						<argument>-Dorg.slf4j.simpleLogger.defaultLogLevel=debug</argument>
+						<argument>-Dorg.slf4j.simpleLogger.showDateTime=false</argument>
+						<argument>-Dorg.slf4j.simpleLogger.showThreadName=false</argument>
+						<argument>-Dorg.slf4j.simpleLogger.showLogName=false</argument>
+						<argument>-classpath</argument>
+						<classpath />
+						<argument>com.garganttua.api.example.ExampleApplication</argument>
+					</arguments>
+				</configuration>
+			</plugin>
+			<plugin>
+				<!-- Builds an executable uber-jar at
+				     target/garganttua-api-example-${project.version}.jar
+				     bundling every runtime dependency and a Main-Class
+				     manifest entry. Run with:
+				       java [enable-preview] -jar target/garganttua-api-example-3.0.0-ALPHA01.jar
+				     (The enable-preview flag cannot live in the
+				     manifest — it has to stay on the java command line.) -->
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.5.3</version>
 				<executions>
 					<execution>
-						<id>attach-sources</id>
+						<phase>package</phase>
 						<goals>
-							<goal>jar</goal>
+							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<!-- Drop signature files from signed
+										     jars; otherwise the JVM rejects
+										     the shaded jar with
+										     "Invalid signature file digest". -->
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+										<exclude>module-info.class</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>com.garganttua.api.example.ExampleApplication</mainClass>
+								</transformer>
+								<!-- Merge SPI files
+								     (META-INF/services/*) so providers
+								     like slf4j-simple stay discoverable. -->
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+								<!-- Merge garganttua-core's compile-time
+								     annotation indices. Without these
+								     AppendingTransformer entries, each
+								     dependency's index file at
+								     META-INF/garganttua/index/<fqn>
+								     overwrites the others in the fat jar
+								     and the framework's auto-detection
+								     finds nothing (e.g. @Observer beans
+								     never get registered, observers
+								     never notified). One transformer per
+								     index file because maven-shade has
+								     no glob-pattern merger. -->
+								<!-- reflection / dsl / dependency -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Reflected</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.ReflectedBuilder</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Indexed</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.bootstrap.annotations.Bootstrap</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.dsl.annotations.Scan</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.dsl.dependency.DependsOn</resource>
+								</transformer>
+								<!-- expression -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
+								</transformer>
+								<!-- injection -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.BeanProvider</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.ChildContext</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Fixed</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Null</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Property</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.PropertyProvider</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Provider</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Resolver</resource>
+								</transformer>
+								<!-- mapper -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRule</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRules</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.MappingIgnore</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRule</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRules</resource>
+								</transformer>
+								<!-- mutex -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.Mutex</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.MutexFactory</resource>
+								</transformer>
+								<!-- runtime -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Catch</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Code</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Condition</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Context</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Exception</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.ExceptionMessage</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.FallBack</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Input</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.OnException</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Operation</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Output</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.RuntimeDefinition</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Step</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Steps</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Synchronized</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variable</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variables</resource>
+								</transformer>
+								<!-- script + workflow -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.script.annotations.ScriptDefinition</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.workflow.annotations.WorkflowDefinition</resource>
+								</transformer>
+								<!-- configuration -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.Configurable</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigProperty</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigIgnore</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigurationFormat</resource>
+								</transformer>
+								<!-- observability — THE ONE that was causing the user-reported "@Observer not detected" -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/com.garganttua.core.observability.annotations.Observer</resource>
+								</transformer>
+								<!-- JSR-330: Qualifier + Scope are the meta-markers; the others are leaf injection annotations -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/javax.inject.Inject</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/javax.inject.Singleton</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/javax.inject.Named</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/javax.inject.Qualifier</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/garganttua/index/javax.inject.Scope</resource>
+								</transformer>
+								<!-- AOT descriptors ServiceLoader entry — needed too so AOTClass_* self-register on startup -->
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/com.garganttua.core.aot.commons.IAOTSelfRegistering</resource>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>META-INF/services/com.garganttua.core.aot.commons.IAOTInfrastructureSeed</resource>
+								</transformer>
+							</transformers>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
