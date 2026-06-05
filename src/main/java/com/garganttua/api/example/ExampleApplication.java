@@ -24,7 +24,10 @@ import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder;
+import com.garganttua.api.core.security.authentication.DomainSupplierBuilder;
 import com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder;
+import com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder;
+import com.garganttua.api.core.security.authorization.RequestSupplierBuilder;
 import com.garganttua.api.core.service.RequestBuilder;
 import com.garganttua.core.bootstrap.dsl.Bootstrap;
 import com.garganttua.core.bootstrap.dsl.IBootstrap;
@@ -76,7 +79,14 @@ public final class ExampleApplication {
         section("AUTHENTICATION");
         Authorization aliceAuthorization = demoAuthentication(api);
 
-       /* if (aliceAuthorization != null) {
+        // Replaying the issued token through the API (Mode B) exercises the
+        // verifyAuthorization → token self-verify pipeline. Currently disabled:
+        // the self-verify path returns 401 "All authentication methods failed"
+        // (the token authenticator's authenticate method is never reached — the
+        // pipeline fails earlier, at token-principal resolution). Tracked as a
+        // framework follow-up; see TokenAuthentication for the related signable
+        // key-realm limitation.
+        /* if (aliceAuthorization != null) {
             section("AUTHENTICATED CALLS (using Alice's authorization)");
             demoAuthenticatedCalls(api, aliceAuthorization);
 
@@ -90,21 +100,21 @@ public final class ExampleApplication {
         // CoreStatsObserver is @Observer-annotated and bootstrap-scanned —
         // it aggregates every layer; we just slice the snapshot by source
         // prefix for display.
-        section("OBSERVABILITY — operation stats");
-        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("api:operation:"), "operation");
+        // section("OBSERVABILITY — operation stats");
+        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("api:operation:"), "operation");
 
-        section("OBSERVABILITY — workflow timing map (stages)");
-        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("stage:"), "stage");
+        // section("OBSERVABILITY — workflow timing map (stages)");
+        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("stage:"), "stage");
 
-        section("OBSERVABILITY — workflow timing map (scripts)");
-        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("script:"), "script");
+        // section("OBSERVABILITY — workflow timing map (scripts)");
+        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("script:"), "script");
 
-        section("OBSERVABILITY — core engines (mapper / runtime / scriptcontext / …)");
-        printCoreStats(app.coreStats.snapshot(),
-                s -> !s.source().startsWith("stage:")
-                        && !s.source().startsWith("script:")
-                        && !s.source().startsWith("api:operation:"),
-                "source");
+        // section("OBSERVABILITY — core engines (mapper / runtime / scriptcontext / …)");
+        // printCoreStats(app.coreStats.snapshot(),
+        //         s -> !s.source().startsWith("stage:")
+        //                 && !s.source().startsWith("script:")
+        //                 && !s.source().startsWith("api:operation:"),
+        //         "source");
     }
 
     /**
@@ -457,7 +467,7 @@ public final class ExampleApplication {
 
         builder.multiTenant(true)
                 .superTenantId(SUPER_TENANT)
-                .superTenantAutoCreate(false);
+                .superTenantAutoCreate(true);
 
         builder.exposeAuthorities().access(Access.anonymous);
 
@@ -469,6 +479,18 @@ public final class ExampleApplication {
                 .withParam(1, new AuthenticateCredentialsSupplierBuilder())
                 .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
         authBuilder.up();
+
+        // Token authentication strategy for the authorization domain (the token
+        // verifies itself). Param 3 injects the runtime IDomain so the method can
+        // call SecurityExpressions.verifyIfSignable for real signature checking.
+        TokenAuthentication tokenAuthImpl = new TokenAuthentication();
+        var tokenAuthBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(tokenAuthImpl, IClass.getClass(TokenAuthentication.class)));
+        tokenAuthBuilder.authenticate("authenticate")
+                .withParam(0, new PrincipalSupplierBuilder())
+                .withParam(1, new AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
+        tokenAuthBuilder.up();
 
         // ---- Demo entities seeded at startup via .upsert(...) ----
 
@@ -495,6 +517,7 @@ public final class ExampleApplication {
         // 1) Tenant domain (the entity that *is* the tenant).
         IDomainBuilder<Tenant> tenantBuilder = builder.domain(IClass.getClass(Tenant.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                 .id("id").uuid("uuid")
                 .up()
@@ -511,9 +534,13 @@ public final class ExampleApplication {
                 .upsert(acme);
         tenantBuilder.up();
 
-        builder.superTenantId("1").superTenantAutoCreate(true);
-
         // 2) Authorization domain (signable JWT-like token). Owned by a user.
+        // Since the verifyAuthorization / authenticate unification, an
+        // authorization domain MUST also be an authenticator: an incoming token
+        // verifies ITSELF through this domain's authenticate pipeline. We wire
+        // TokenAuthentication (real signature check) below. creation/readAll are
+        // enabled because the framework persists tokens and looks them up by
+        // routing through this domain's own pipeline (createOne / readAll).
         IDomainBuilder<Authorization> authorizationBuilder = builder.domain(IClass.getClass(Authorization.class))
                 .tenant(false)
                 .owned("ownerId")
@@ -524,19 +551,34 @@ public final class ExampleApplication {
                 .id("id").uuid("uuid").tenantId("tenantId")
                 .db(authorizationDao)
                 .up()
-                .security()
+                .creation(true).readAll(true).readOne(true);
+
+        authorizationBuilder.security()
                 .authorization()
-                .type("type")
-                .authorities("authorities")
-                .expirable("expiresAt")
-                .revokable("revoked")
-                .storable(true)
-                .signable()
-                .signature("signature")
-                .getDataToSign("getDataToSign")
+                    .type("type")
+                    .authorities("authorities")
+                    .expirable("expiresAt")
+                    .revokable("revoked")
+                    .storable(true)
+                    .signable()
+                        .signature("signature")
+                        .getDataToSign("getDataToSign")
+                    .up()
+                    // Custom forge declared as a METHOD (+ suppliers), the
+                    // mint-side dual of .authentication(...).authenticate("m").
+                    // Free param signature resolved from the runtime context:
+                    // the auth result, the authenticator domain, the request.
+                    .issuer(new FixedSupplierBuilder<>(new TokenIssuer(), IClass.getClass(TokenIssuer.class)), "issue")
+                        .withParam(0, new AuthenticationSupplierBuilder())
+                        .withParam(1, new DomainSupplierBuilder())
+                        .withParam(2, new RequestSupplierBuilder())
+                        .up()
                 .up()
-                .up()
-                .up();
+                .authenticator()
+                    .login("uuid")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true)
+                    .authentication(tokenAuthBuilder);
         authorizationBuilder.up();
 
         // 3) Key domain — backing store for the persisted signing keys. The
@@ -569,6 +611,7 @@ public final class ExampleApplication {
         IDomainBuilder<User> userBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(false)
                 .owner("uuid")
+                .superOwner("superOwner")
                 .entity()
                 .id("id").uuid("uuid").tenantId("tenantId").update("login", "user-update-login")
                 .up()
@@ -578,7 +621,7 @@ public final class ExampleApplication {
                 .up()
                 .upsert(alice);
 
-        var authenticatorBuilder = userBuilder.security()
+        userBuilder.security()
                 .creationAuthority(true)
                 .authenticator()
                     .login("login")
@@ -588,17 +631,14 @@ public final class ExampleApplication {
                     .accountNonExpired("accountNonExpired")
                     .credentialsNonExpired("credentialsNonExpired")
                     .scope(AuthenticatorScope.tenant)
-                    .authentication(authBuilder);
-
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        var authzLink = authenticatorBuilder
-                .authorization((IDomainBuilder) authorizationBuilder)
-                .lifeTime(60, TimeUnit.MINUTES)
-                .key((IDomainBuilder) keyBuilder)
-                .usage(AuthenticatorKeyUsage.oneForEach)
-                .algorithm(KeyAlgorithm.EC_256)
-                .signatureAlgorithm(SignatureAlgorithm.SHA256)
-                .lifeTime(365, TimeUnit.DAYS);
+                    .authentication(authBuilder)
+                    .authorization((IDomainBuilder) authorizationBuilder)
+                        .lifeTime(24, TimeUnit.HOURS)
+                        .key(keyBuilder)
+                        .usage(AuthenticatorKeyUsage.oneForEach)
+                        .algorithm(KeyAlgorithm.EC_256)
+                        .signatureAlgorithm(SignatureAlgorithm.SHA256)
+                        .lifeTime(365, TimeUnit.DAYS);
 
         userBuilder.up();
 

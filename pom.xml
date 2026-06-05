@@ -38,11 +38,10 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 		<garganttua.api.version>3.0.0-ALPHA01</garganttua.api.version>
 		<garganttua.core.version>2.0.0-ALPHA02</garganttua.core.version>
 
-		<lombok.version>1.18.30</lombok.version>
 		<slf4j.version>2.0.13</slf4j.version>
 		<native.maven.plugin.version>0.10.6</native.maven.plugin.version>
 
@@ -143,14 +142,17 @@
 			<artifactId>garganttua-crypto</artifactId>
 			<version>${garganttua.core.version}</version>
 		</dependency>
+		<!-- Observability annotations (@Observer) + LogEvent. Was reachable
+		     transitively until core 02924f53 (Diagnostics → observable Logger)
+		     re-wired the modules; the example uses @Observer directly
+		     (CoreLoggingObserver/CoreStatsObserver) so it must depend on it. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-observability</artifactId>
+			<version>${garganttua.core.version}</version>
+		</dependency>
 
 		<!-- third-party -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
@@ -251,8 +253,8 @@
 			<!-- GraalVM build plugin. The starter only brings the AOT Feature
 			     (auto-activated via META-INF/native-image); the consumer wires
 			     the plugin itself (cf. garganttua-starter-native README). Must
-			     run on a GraalVM JDK 21+ (e.g. JAVA_HOME=~/.sdkman/.../21.0.2-graalce).
-			     the enable-preview buildArg mirrors the compiler flag. -->
+			     run on a GraalVM JDK 25 (e.g. JAVA_HOME=~/.sdkman/.../25.0.3-graal).
+			     no enable-preview flag since the JDK 25 migration. -->
 			<build>
 				<plugins>
 					<!-- garganttua-core's AOT registry aggregator: scans the compiled
@@ -300,7 +302,6 @@
 							<imageName>garganttua-api-example</imageName>
 							<mainClass>com.garganttua.api.example.ExampleApplication</mainClass>
 							<buildArgs>
-								<buildArg>--enable-preview</buildArg>
 								<buildArg>--no-fallback</buildArg>
 							</buildArgs>
 						</configuration>
@@ -321,21 +322,11 @@
 					<target>${java.version}</target>
 					<compilerArgs>
 						<arg>-parameters</arg>
-						<!-- garganttua-core 2.0.0-ALPHA02 ships classes built
-						     with Java 21 preview features. Mirror the flag
-						     at compile time so the IDE picks it up via the
-						     Maven import. -->
-						<arg>--enable-preview</arg>
 						<!-- Drives DirectBinderGenerator. Property is overridden
 						     to false in the reflection-runtime profile. -->
 						<arg>-Agarganttua.direct.binders=${garganttua.direct.binders}</arg>
 					</compilerArgs>
 					<annotationProcessorPaths>
-						<path>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-							<version>${lombok.version}</version>
-						</path>
 						<path>
 							<groupId>com.garganttua.core</groupId>
 							<artifactId>garganttua-aot-annotation-processor</artifactId>
@@ -349,24 +340,21 @@
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.1.0</version>
 				<!-- Run with: mvn exec:exec
-				     garganttua-core 2.0.0-ALPHA02 compiles some classes
-				     with Java 21 preview features, so the runtime JVM
-				     needs the enable-preview flag. That flag can only
-				     be passed via exec:exec (which forks a JVM), not
-				     exec:java (which reuses Maven's JVM). -->
+				     Forks a fresh JVM (exec:java reuses Maven's). Since the
+				     JDK 25 migration the build no longer uses preview features
+				     (ScopedValue is final in 25), so no enable-preview flag is
+				     needed at compile or run time. Requires a JDK 25 runtime. -->
 				<configuration>
 					<executable>java</executable>
 					<arguments>
-						<argument>--enable-preview</argument>
-						<!-- slf4j-simple reads simplelogger.properties via
-						     the system classloader, which under exec
-						     doesn't see project resources. Push the
-						     settings in as -D flags so the
-						     LoggingObserver output is visible. -->
-						<argument>-Dorg.slf4j.simpleLogger.defaultLogLevel=debug</argument>
-						<argument>-Dorg.slf4j.simpleLogger.showDateTime=false</argument>
-						<argument>-Dorg.slf4j.simpleLogger.showThreadName=false</argument>
-						<argument>-Dorg.slf4j.simpleLogger.showLogName=false</argument>
+						<!-- Logging is driven entirely by
+						     src/main/resources/simplelogger.properties
+						     (on the classpath at target/classes). We do
+						     NOT pass -Dorg.slf4j.simpleLogger.* here: in
+						     slf4j-simple, system properties take
+						     precedence over the file, so any such flag
+						     would silently override simplelogger.properties.
+						     To change the level, edit that file. -->
 						<argument>-classpath</argument>
 						<classpath />
 						<argument>com.garganttua.api.example.ExampleApplication</argument>
@@ -377,10 +365,8 @@
 				<!-- Builds an executable uber-jar at
 				     target/garganttua-api-example-${project.version}.jar
 				     bundling every runtime dependency and a Main-Class
-				     manifest entry. Run with:
-				       java [enable-preview] -jar target/garganttua-api-example-3.0.0-ALPHA01.jar
-				     (The enable-preview flag cannot live in the
-				     manifest — it has to stay on the java command line.) -->
+				     manifest entry. Run with (JDK 25, no preview flag needed):
+				       java -jar target/garganttua-api-example-3.0.0-ALPHA01.jar -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.5.3</version>

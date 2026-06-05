@@ -12,6 +12,12 @@ String id;
 String uuid;
 String tenantId;
 
+// Server-authoritative super-owner marker. Mandated by the framework on any
+// .owner(field) domain (DomainBuilder.validateSuperFields): it feeds the Api
+// super-owner registry scanned at startup and is recomputed into the caller's
+// super flags during VERIFY_AUTHORIZATION (the registry is the source of truth).
+Boolean superOwner = false;
+
 String login;
 String passwordHash;
 
@@ -30,6 +36,9 @@ java.util.List<String> authorities;
     public void setUuid(String uuid) { this.uuid = uuid; }
     public String getTenantId() { return tenantId; }
     public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+
+    public Boolean getSuperOwner() { return superOwner; }
+    public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
 
     public String getLogin() { return login; }
     public void setLogin(String login) { this.login = login; }
