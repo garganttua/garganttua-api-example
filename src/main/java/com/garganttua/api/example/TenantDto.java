@@ -15,6 +15,8 @@ String id;
 String uuid;
     @FieldMappingRule(sourceFieldAddress = "name")
 String name;
+    @FieldMappingRule(sourceFieldAddress = "superTenant")
+Boolean superTenant;
 
     public TenantDto() {
     }
@@ -41,5 +43,13 @@ String name;
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getSuperTenant() {
+        return superTenant;
+    }
+
+    public void setSuperTenant(Boolean superTenant) {
+        this.superTenant = superTenant;
     }
 }

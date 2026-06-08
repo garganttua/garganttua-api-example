@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 /**
@@ -43,6 +44,13 @@ public class TokenIssuer {
         token.setCreatedAt(Instant.now());
         token.setExpiresAt(Instant.now().plusSeconds(3600));
         token.setRevoked(Boolean.FALSE);
+
+        // A custom issuer owns production INCLUDING the signature (the framework
+        // does not auto-sign on this path). Delegate to the framework's own
+        // signing, which resolves the persisted key realm from the authenticator
+        // domain (.authorization(tokenDomain).key(...)) scoped by the request,
+        // signs getDataToSign() into the signature field, and stamps signedBy.
+        SecurityExpressions.signIfSignable(token, domain, request);
         return token;
     }
 }

@@ -89,6 +89,21 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- Server mode: Javalin HTTP transport + Jackson JSON serializer.
+		     binding-javalin brings io.javalin + the @Protocol/@Interface;
+		     binding-jackson brings the @Serializer. Both are auto-detected at
+		     bootstrap (scan surface com.garganttua). Headless mode wires no
+		     interface, so no server starts. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-javalin</artifactId>
+			<version>${garganttua.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-jackson</artifactId>
+			<version>${garganttua.api.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflection</artifactId>

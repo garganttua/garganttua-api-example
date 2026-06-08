@@ -19,15 +19,15 @@ import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
-import com.garganttua.api.core.builder.ApiBuilder;
+import com.garganttua.api.binding.javalin.JavalinInterface;
+import com.garganttua.api.binding.javalin.JavalinProtocol;
+import com.garganttua.api.core.api.ApiBuilder;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder;
-import com.garganttua.api.core.security.authentication.DomainSupplierBuilder;
+import com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder;
 import com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder;
-import com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder;
-import com.garganttua.api.core.security.authorization.RequestSupplierBuilder;
 import com.garganttua.api.core.service.RequestBuilder;
 import com.garganttua.core.bootstrap.dsl.Bootstrap;
 import com.garganttua.core.bootstrap.dsl.IBootstrap;
@@ -56,6 +56,9 @@ public final class ExampleApplication {
     private static final String SUPER_TENANT = "SUPER_TENANT";
     private static final String[] DOMAIN_NAMES = { "tenants", "authorizations", "keys", "users" };
 
+    /** HTTP port used in server mode (the Javalin interface). */
+    private static final int HTTP_PORT = 7000;
+
     private final InMemoryDao tenantDao = new InMemoryDao();
     private final InMemoryDao userDao = new InMemoryDao();
     private final InMemoryDao authorizationDao = new InMemoryDao();
@@ -63,11 +66,49 @@ public final class ExampleApplication {
 
     private final CoreStatsObserver coreStats = new CoreStatsObserver();
 
-    public static void main(String[] args) throws ApiException {
+    public static void main(String[] args) throws Exception {
+        // logs / --logs (alias debug / --debug): raise the slf4j-simple level to
+        // DEBUG so the CoreLoggingObserver streams every captured observability
+        // event (core-start/end/error/log) to the console live. MUST run before
+        // the first logger is created, hence the very first statement here — a
+        // system property overrides simplelogger.properties in slf4j-simple.
+        if (hasArg(args, "logs", "--logs", "debug", "--debug")) {
+            System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
+        }
+
+        // Run modes:
+        //   headless (default) - no interface; runs the in-process demo calls.
+        //   server             - attaches the Javalin HTTP interface to every
+        //                        domain and serves on http://localhost:HTTP_PORT.
+        // Extra flags (any position, combinable): observe, logs.
+        //   Usage: java ... ExampleApplication [server] [observe] [logs]
+        boolean server = hasArg(args, "server", "--server");
+        // observe / --observe: trace to the console what observability captured
+        // (the CoreStatsObserver aggregate, sliced by source layer). In headless
+        // mode it prints after the demos; in server mode it prints on shutdown.
+        boolean observe = hasArg(args, "observe", "--observe");
+
         ExampleApplication app = new ExampleApplication();
-        IApi api = app.buildApi();
+        IApi api = app.buildApi(server);
 
-
+        if (server) {
+            // Building the API ran the lifecycle, which started the Javalin
+            // server (Domain.doStart -> IInterface.onStart binds the port).
+            System.out.println();
+            System.out.println("========== SERVER MODE ==========");
+            System.out.println("Garganttua API example serving on http://localhost:" + HTTP_PORT);
+            System.out.println("Domains exposed: " + String.join(", ", DOMAIN_NAMES));
+            System.out.println("Try: curl http://localhost:" + HTTP_PORT + "/tenants");
+            System.out.println("Press Ctrl+C to stop.");
+            if (observe) {
+                System.out.println("Observability: a capture summary prints on shutdown (Ctrl+C).");
+                Runtime.getRuntime().addShutdownHook(
+                        new Thread(() -> printObservability(app), "observability-dump"));
+            }
+            // Keep the JVM alive; the server runs on its own (Jetty) threads.
+            Thread.currentThread().join();
+            return;
+        }
 
         ICaller caller = Caller.createSuperCaller(api.getSuperTenantId());
 
@@ -86,35 +127,58 @@ public final class ExampleApplication {
         // pipeline fails earlier, at token-principal resolution). Tracked as a
         // framework follow-up; see TokenAuthentication for the related signable
         // key-realm limitation.
-        /* if (aliceAuthorization != null) {
+         if (aliceAuthorization != null) {
             section("AUTHENTICATED CALLS (using Alice's authorization)");
             demoAuthenticatedCalls(api, aliceAuthorization);
 
             section("USERS");
             demoUserCrud(api, aliceAuthorization);
-        }*/
+        }
 
-        // Single unified observability source now: the api emits its
-        // operation-level events on `api:operation:<domain>:<op>` since
-        // IApiObserver was migrated to core's ObservableEvent model.
-        // CoreStatsObserver is @Observer-annotated and bootstrap-scanned —
-        // it aggregates every layer; we just slice the snapshot by source
-        // prefix for display.
-        // section("OBSERVABILITY — operation stats");
-        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("api:operation:"), "operation");
+        if (observe) {
+            printObservability(app);
+        }
+    }
 
-        // section("OBSERVABILITY — workflow timing map (stages)");
-        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("stage:"), "stage");
+    /**
+     * Returns true if {@code args} contains any of {@code names} (case-insensitive).
+     */
+    private static boolean hasArg(String[] args, String... names) {
+        for (String a : args) {
+            for (String n : names) {
+                if (a.equalsIgnoreCase(n)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-        // section("OBSERVABILITY — workflow timing map (scripts)");
-        // printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("script:"), "script");
+    /**
+     * Traces to the console what observability captured during the run: the
+     * {@link CoreStatsObserver} aggregate (count / ok / ko / timing per source),
+     * sliced by layer. The api emits operation-level events on
+     * {@code api:operation:<domain>:<op>} plus nested engine events
+     * (stage:*, script:*, mapper:*, runtime:*, …); CoreStatsObserver is
+     * {@code @Observer}-scanned and routes every layer through a shared static
+     * aggregate, so this read handle sees them all. Enabled by {@code observe}.
+     */
+    private static void printObservability(ExampleApplication app) {
+        section("OBSERVABILITY — operation stats");
+        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("api:operation:"), "operation");
 
-        // section("OBSERVABILITY — core engines (mapper / runtime / scriptcontext / …)");
-        // printCoreStats(app.coreStats.snapshot(),
-        //         s -> !s.source().startsWith("stage:")
-        //                 && !s.source().startsWith("script:")
-        //                 && !s.source().startsWith("api:operation:"),
-        //         "source");
+        section("OBSERVABILITY — workflow timing map (stages)");
+        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("stage:"), "stage");
+
+        section("OBSERVABILITY — workflow timing map (scripts)");
+        printCoreStats(app.coreStats.snapshot(), s -> s.source().startsWith("script:"), "script");
+
+        section("OBSERVABILITY — core engines (mapper / runtime / scriptcontext / …)");
+        printCoreStats(app.coreStats.snapshot(),
+                s -> !s.source().startsWith("stage:")
+                        && !s.source().startsWith("script:")
+                        && !s.source().startsWith("api:operation:"),
+                "source");
     }
 
     /**
@@ -436,7 +500,8 @@ public final class ExampleApplication {
         }
     }
 
-    IApi buildApi() throws ApiException {
+    @SuppressWarnings({ "unchecked" })
+    IApi buildApi(boolean withHttp) throws ApiException {
         IBootstrap bootstrap = new Bootstrap();
         bootstrap.autoDetect(true).withPackage("com.garganttua");
 
@@ -445,6 +510,27 @@ public final class ExampleApplication {
         // first makes the SPI factory (ApiBuilderFactory) skip its empty duplicate.
         IApiBuilder builder = ApiBuilder.builder();
         bootstrap.withBuilder(builder);
+
+        // Server mode: ONE shared Javalin interface (one HTTP server) attached to
+        // every domain below via .interfasse(...). The JavalinProtocol and the
+        // Jackson serializer are auto-detected from the classpath (the
+        // garganttua-api-javalin dependency). In headless mode this stays null and
+        // no interface is attached, so no server is started.
+        FixedSupplierBuilder<JavalinInterface> httpInterface = withHttp
+                ? new FixedSupplierBuilder<>(new JavalinInterface(HTTP_PORT), IClass.getClass(JavalinInterface.class))
+                : null;
+
+        // The transport protocol must be registered explicitly (it is not picked
+        // up by asset auto-detection here): it teaches the pipeline how to read a
+        // JavalinServletContext request and write the HTTP response back onto it.
+        if (withHttp) {
+            builder.protocol(new JavalinProtocol());
+            // The api ships no production serializer yet (binding-jackson is an
+            // empty WIP), so register the example's own JSON serializer; the
+            // RESPONSE stage uses it to render entities as JSON (otherwise the
+            // protocol falls back to text/plain toString).
+            builder.serializer(new ExampleJsonSerializer());
+        }
 
         // Enable workflow execution timing — injects the
         // observe("start"|"end","stage:<name>") / "script:<stage>.<name>"
@@ -488,17 +574,15 @@ public final class ExampleApplication {
                 .authentication(new FixedSupplierBuilder<>(tokenAuthImpl, IClass.getClass(TokenAuthentication.class)));
         tokenAuthBuilder.authenticate("authenticate")
                 .withParam(0, new PrincipalSupplierBuilder())
-                .withParam(1, new AuthenticateCredentialsSupplierBuilder())
+                // The decoded token travels as the authenticate request's
+                // credentials (an Object). AuthenticateCredentialsSupplier only
+                // yields byte[] (login+password) and supplies null for a token —
+                // the token self-verify needs DecodedAuthorizationSupplier.
+                .withParam(1, new DecodedAuthorizationSupplierBuilder())
                 .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
         tokenAuthBuilder.up();
 
         // ---- Demo entities seeded at startup via .upsert(...) ----
-
-        Tenant masterTenant = new Tenant();
-        masterTenant.setUuid(SUPER_TENANT);
-        masterTenant.setId(SUPER_TENANT);
-        masterTenant.setName("Master");
-        masterTenant.setCreatedAt(Instant.now());
 
         Tenant acme = new Tenant();
         acme.setUuid("tenant-acme-uuid");
@@ -528,10 +612,12 @@ public final class ExampleApplication {
                 .creation(true).readAll(true).readOne(true)
                 .security()
                 .readAllAccess(Access.anonymous)
+                .readOneAccess(Access.anonymous)
                 .creationAccess(Access.anonymous)
                 .deleteAllAuthority(true)
                 .up()
                 .upsert(acme);
+        if (withHttp) tenantBuilder.interfasse(httpInterface);
         tenantBuilder.up();
 
         // 2) Authorization domain (signable JWT-like token). Owned by a user.
@@ -564,21 +650,14 @@ public final class ExampleApplication {
                         .signature("signature")
                         .getDataToSign("getDataToSign")
                     .up()
-                    // Custom forge declared as a METHOD (+ suppliers), the
-                    // mint-side dual of .authentication(...).authenticate("m").
-                    // Free param signature resolved from the runtime context:
-                    // the auth result, the authenticator domain, the request.
-                    .issuer(new FixedSupplierBuilder<>(new TokenIssuer(), IClass.getClass(TokenIssuer.class)), "issue")
-                        .withParam(0, new AuthenticationSupplierBuilder())
-                        .withParam(1, new DomainSupplierBuilder())
-                        .withParam(2, new RequestSupplierBuilder())
-                        .up()
                 .up()
                 .authenticator()
                     .login("uuid")
                     .scope(AuthenticatorScope.tenant)
                     .alwaysEnabled(true)
                     .authentication(tokenAuthBuilder);
+
+        if (withHttp) authorizationBuilder.interfasse(httpInterface);
         authorizationBuilder.up();
 
         // 3) Key domain — backing store for the persisted signing keys. The
@@ -596,7 +675,10 @@ public final class ExampleApplication {
                 .db(keyDao)
                 .up()
                 .creation(true).readAll(true).readOne(true);
-        keyBuilder.key()
+        // @Key config now lives under .security().key() (api DSL refactor:
+        // domain().key() -> domain().security().key()). Mandatory: the users
+        // authenticator references this domain as its signing @Key domain.
+        keyBuilder.security().key()
                 .name("realmName")
                 .keyAlgorithm("algorithm")
                 .signatureAlgorithm("signatureAlgorithm")
@@ -605,6 +687,7 @@ public final class ExampleApplication {
                 .expiration("expiration")
                 .revoked("revoked")
                 .up();
+        if (withHttp) keyBuilder.interfasse(httpInterface);
         keyBuilder.up();
 
         // 4) User domain — the authenticator. Owns the authorizations it issues.
@@ -621,7 +704,12 @@ public final class ExampleApplication {
                 .up()
                 .upsert(alice);
 
-        userBuilder.security()
+        // .authenticator().authentication(ab) returns the per-authentication
+        // sub-builder; on it we declare the token domain (entity + lifeTime +
+        // persisted key). The custom mint issuer would be declared on the SAME
+        // sub-builder via .authorization(issuer, "issue").withParam(...) — left
+        // commented for now (default framework minting signs the token).
+        var userAuth = userBuilder.security()
                 .creationAuthority(true)
                 .authenticator()
                     .login("login")
@@ -630,17 +718,25 @@ public final class ExampleApplication {
                     .accountNonLocked("accountNonLocked")
                     .accountNonExpired("accountNonExpired")
                     .credentialsNonExpired("credentialsNonExpired")
-                    .scope(AuthenticatorScope.tenant)
-                    .authentication(authBuilder)
-                    .authorization((IDomainBuilder) authorizationBuilder)
-                        .lifeTime(24, TimeUnit.HOURS)
-                        .key(keyBuilder)
-                        .usage(AuthenticatorKeyUsage.oneForEach)
-                        .algorithm(KeyAlgorithm.EC_256)
-                        .signatureAlgorithm(SignatureAlgorithm.SHA256)
-                        .lifeTime(365, TimeUnit.DAYS);
+                    .scope(AuthenticatorScope.system)
+                    .authentication(authBuilder);
 
+        // userAuth.authorization(new FixedSupplierBuilder<>(new TokenIssuer(), IClass.getClass(TokenIssuer.class)), "issue")
+        //         .withParam(0, new com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder())
+        //         .withParam(1, new DomainSupplierBuilder())
+        //         .withParam(2, new com.garganttua.api.core.security.authorization.RequestSupplierBuilder());
+
+        userAuth.authorization((IDomainBuilder) authorizationBuilder)
+                .lifeTime(24, TimeUnit.HOURS)
+                .key((IDomainBuilder) keyBuilder)
+                    .usage(AuthenticatorKeyUsage.oneForEach)
+                    .algorithm(KeyAlgorithm.EC_256)
+                    .signatureAlgorithm(SignatureAlgorithm.SHA256)
+                    .lifeTime(365, TimeUnit.DAYS);
+
+        if (withHttp) userBuilder.interfasse(httpInterface);
         userBuilder.up();
+
 
         return bootstrap.build().toList().stream()
                 .filter(IApi.class::isInstance)
