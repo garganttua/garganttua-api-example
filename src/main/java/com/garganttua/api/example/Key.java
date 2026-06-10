@@ -2,6 +2,7 @@ package com.garganttua.api.example;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.core.crypto.IKey;
 import com.garganttua.core.reflection.annotations.Reflected;
 
@@ -55,9 +56,16 @@ public class Key {
     public String getSignatureAlgorithm() { return signatureAlgorithm; }
     public void setSignatureAlgorithm(String s) { this.signatureAlgorithm = s; }
 
+    // Crypto material is never serialized over the wire: a wrapped IKey holds a
+    // sun.security.* key (not exported to unnamed modules) which makes Jackson
+    // throw a 500, and a signing key must never leak through a REST read anyway.
+    // @JsonIgnore only affects (de)serialization; the framework's reflective
+    // field access for signing/verifying is unaffected.
+    @JsonIgnore
     public IKey getPublicMaterial() { return publicMaterial; }
     public void setPublicMaterial(IKey publicMaterial) { this.publicMaterial = publicMaterial; }
 
+    @JsonIgnore
     public IKey getPrivateMaterial() { return privateMaterial; }
     public void setPrivateMaterial(IKey privateMaterial) { this.privateMaterial = privateMaterial; }
 

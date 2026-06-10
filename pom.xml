@@ -40,7 +40,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>25</java.version>
 		<garganttua.api.version>3.0.0-ALPHA01</garganttua.api.version>
-		<garganttua.core.version>2.0.0-ALPHA02</garganttua.core.version>
+		<garganttua.core.version>2.0.0-ALPHA03</garganttua.core.version>
 
 		<slf4j.version>2.0.13</slf4j.version>
 		<native.maven.plugin.version>0.10.6</native.maven.plugin.version>

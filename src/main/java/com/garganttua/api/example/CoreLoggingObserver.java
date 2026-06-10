@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.ErrorEvent;
+import com.garganttua.core.observability.LogEvent;
 import com.garganttua.core.observability.IObserver;
 import com.garganttua.core.observability.ObservableEvent;
 import com.garganttua.core.observability.StartEvent;
@@ -48,6 +49,16 @@ public final class CoreLoggingObserver implements IObserver<ObservableEvent> {
                         e.executionId(), e.source(), micros,
                         e.failure() == null ? "<null>" : e.failure().getClass().getSimpleName(),
                         e.failure() == null ? "" : e.failure().getMessage());
+            }
+            case LogEvent l -> {
+                String msg = "core-log   exec={} src={} {}";
+                switch (l.level()) {
+                    case TRACE -> log.trace(msg, l.executionId(), l.source(), l.message());
+                    case DEBUG -> log.debug(msg, l.executionId(), l.source(), l.message());
+                    case INFO  -> log.info(msg, l.executionId(), l.source(), l.message());
+                    case WARN  -> log.warn(msg, l.executionId(), l.source(), l.message());
+                    case ERROR -> log.error(msg, l.executionId(), l.source(), l.message());
+                }
             }
         }
     }

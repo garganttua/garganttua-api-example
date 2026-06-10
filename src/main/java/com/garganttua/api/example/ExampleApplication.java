@@ -55,6 +55,9 @@ public final class ExampleApplication {
 
     private static final String SUPER_TENANT = "SUPER_TENANT";
     private static final String[] DOMAIN_NAMES = { "tenants", "authorizations", "keys", "users" };
+    /** Domains exposed in non-multi-tenant mode (no Tenant domain). */
+    private static final String[] SINGLE_TENANT_DOMAIN_NAMES = { "authorizations", "keys", "users" };
+    private static final String DEMO_TENANT_ID = "tenant-acme-uuid";
 
     /** HTTP port used in server mode (the Javalin interface). */
     private static final int HTTP_PORT = 7000;
@@ -87,18 +90,25 @@ public final class ExampleApplication {
         // (the CoreStatsObserver aggregate, sliced by source layer). In headless
         // mode it prints after the demos; in server mode it prints on shutdown.
         boolean observe = hasArg(args, "observe", "--observe");
+        // notenant / single / --no-tenant: build the API WITHOUT multi-tenancy —
+        // no Tenant domain, authenticator scope=system (no X-Tenant-Id required),
+        // owner-scoping still applies. Default is multi-tenant. Combinable with
+        // every other flag, e.g. `java ... ExampleApplication notenant server`.
+        boolean multiTenant = !hasArg(args, "notenant", "--notenant", "--no-tenant", "single", "--single", "singletenant");
 
         ExampleApplication app = new ExampleApplication();
-        IApi api = app.buildApi(server);
+        IApi api = app.buildApi(server, multiTenant);
+
+        String[] domains = multiTenant ? DOMAIN_NAMES : SINGLE_TENANT_DOMAIN_NAMES;
 
         if (server) {
             // Building the API ran the lifecycle, which started the Javalin
             // server (Domain.doStart -> IInterface.onStart binds the port).
             System.out.println();
-            System.out.println("========== SERVER MODE ==========");
+            System.out.println("========== SERVER MODE" + (multiTenant ? "" : " (single-tenant)") + " ==========");
             System.out.println("Garganttua API example serving on http://localhost:" + HTTP_PORT);
-            System.out.println("Domains exposed: " + String.join(", ", DOMAIN_NAMES));
-            System.out.println("Try: curl http://localhost:" + HTTP_PORT + "/tenants");
+            System.out.println("Domains exposed: " + String.join(", ", domains));
+            System.out.println("Try: curl http://localhost:" + HTTP_PORT + "/" + domains[0]);
             System.out.println("Press Ctrl+C to stop.");
             if (observe) {
                 System.out.println("Observability: a capture summary prints on shutdown (Ctrl+C).");
@@ -110,29 +120,28 @@ public final class ExampleApplication {
             return;
         }
 
-        ICaller caller = Caller.createSuperCaller(api.getSuperTenantId());
-
         System.out.println(api.getAuthorities());
 
-        section("TENANTS");
-        demoTenantCrud(api, caller);
+        // The Tenant domain only exists in multi-tenant mode.
+        if (multiTenant) {
+            ICaller caller = Caller.createSuperCaller(api.getSuperTenantId());
+            section("TENANTS");
+            demoTenantCrud(api, caller);
+        }
 
-        section("AUTHENTICATION");
-        Authorization aliceAuthorization = demoAuthentication(api);
+        section("AUTHENTICATION" + (multiTenant ? "" : " (single-tenant, scope=system)"));
+        Authorization aliceAuthorization = demoAuthentication(api, multiTenant);
 
-        // Replaying the issued token through the API (Mode B) exercises the
-        // verifyAuthorization → token self-verify pipeline. Currently disabled:
-        // the self-verify path returns 401 "All authentication methods failed"
-        // (the token authenticator's authenticate method is never reached — the
-        // pipeline fails earlier, at token-principal resolution). Tracked as a
-        // framework follow-up; see TokenAuthentication for the related signable
-        // key-realm limitation.
-         if (aliceAuthorization != null) {
+        // Replay the issued token through the API (Mode B): the
+        // verifyAuthorization → token self-verify pipeline now performs real
+        // signature verification (verifyTokenSignature) before the business
+        // authenticate, then grants the rights stamped on the token.
+        if (aliceAuthorization != null) {
             section("AUTHENTICATED CALLS (using Alice's authorization)");
-            demoAuthenticatedCalls(api, aliceAuthorization);
+            demoAuthenticatedCalls(api, aliceAuthorization, multiTenant);
 
             section("USERS");
-            demoUserCrud(api, aliceAuthorization);
+            demoUserCrud(api, aliceAuthorization, multiTenant);
         }
 
         if (observe) {
@@ -237,46 +246,55 @@ public final class ExampleApplication {
      *         valid-path authentication failed (in which case the failure
      *         is already printed and the dependent demos will be skipped).
      */
-    private static Authorization demoAuthentication(IApi api) {
+    private static Authorization demoAuthentication(IApi api, boolean multiTenant) {
         IDomain<?> domain = api.getDomain("users").orElseThrow();
         OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
-        String tenantId = "tenant-acme-uuid";
+        // Tenant-scoped auth takes the tenant from the CALLER (request tenantId /
+        // X-Tenant-Id header). In single-tenant mode (scope=system) there is no
+        // tenant: authReq() simply omits it.
+        String tenantId = multiTenant ? DEMO_TENANT_ID : null;
 
-        Authorization issued = runForResponse("authenticate (valid)",
-                () -> RequestBuilder.builder(domain)
-                        .operation(authOp)
-                        .body(new AuthenticationRequest(
-                                "alice@acme",
-                                "hunter2".getBytes(StandardCharsets.UTF_8),
-                                tenantId))
-                        .build().execute(),
-                Authorization.class);
+        // The authorization domain declares .encode("toWire") (JWT), so authenticate
+        // returns the JWT compact string, not the entity. Capture it as a String
+        // and rebuild the Authorization (via fromWire) so the Mode-B demos below can
+        // replay it.
+        String issuedJwt = runForResponse("authenticate (valid)",
+                () -> authReq(domain, authOp, tenantId, "alice@acme", "hunter2").build().execute(),
+                String.class);
+        Authorization issued = null;
+        if (issuedJwt != null) {
+            issued = new Authorization();
+            issued.fromWire(issuedJwt.getBytes(StandardCharsets.UTF_8));
+        }
 
-        run("authenticate (wrong password)", () -> RequestBuilder.builder(domain)
-                .operation(authOp)
-                .body(new AuthenticationRequest(
-                        "alice@acme",
-                        "wrong-password".getBytes(StandardCharsets.UTF_8),
-                        tenantId))
-                .build().execute());
+        run("authenticate (wrong password)",
+                () -> authReq(domain, authOp, tenantId, "alice@acme", "wrong-password").build().execute());
 
-        run("authenticate (unknown login)", () -> RequestBuilder.builder(domain)
-                .operation(authOp)
-                .body(new AuthenticationRequest(
-                        "ghost@acme",
-                        "anything".getBytes(StandardCharsets.UTF_8),
-                        tenantId))
-                .build().execute());
+        run("authenticate (unknown login)",
+                () -> authReq(domain, authOp, tenantId, "ghost@acme", "anything").build().execute());
 
-        run("authenticate (missing tenantId, scope=tenant)", () -> RequestBuilder.builder(domain)
-                .operation(authOp)
-                .body(new AuthenticationRequest(
-                        "alice@acme",
-                        "hunter2".getBytes(StandardCharsets.UTF_8),
-                        null))
-                .build().execute());
+        // The "missing caller tenant" rejection only exists for tenant scope.
+        if (multiTenant) {
+            run("authenticate (missing caller tenant, scope=tenant)",
+                    () -> authReq(domain, authOp, null, "alice@acme", "hunter2").build().execute());
+        }
 
         return issued;
+    }
+
+    /**
+     * Builds an authenticate request, attaching the caller tenant only when
+     * {@code tenantId} is non-null (single-tenant / scope=system passes null).
+     */
+    private static com.garganttua.api.commons.service.IRequestBuilder authReq(IDomain<?> domain,
+            OperationDefinition authOp, String tenantId, String login, String password) {
+        var rb = RequestBuilder.builder(domain)
+                .operation(authOp)
+                .body(new AuthenticationRequest(login, password.getBytes(StandardCharsets.UTF_8)));
+        if (tenantId != null) {
+            rb.tenantId(tenantId);
+        }
+        return rb;
     }
 
     /**
@@ -285,7 +303,7 @@ public final class ExampleApplication {
      * {@code "authorization"} arg (Mode B) and grants Alice the rights
      * stamped onto the token.
      */
-    private static void demoAuthenticatedCalls(IApi api, Authorization authorization) {
+    private static void demoAuthenticatedCalls(IApi api, Authorization authorization, boolean multiTenant) {
         IDomain<?> authzDomain = api.getDomain("authorizations").orElseThrow();
 
         System.out.println("  [issued] uuid=" + authorization.getUuid()
@@ -296,10 +314,10 @@ public final class ExampleApplication {
                         ? "null"
                         : "[" + authorization.getSignature().length + " bytes]"));
 
-        run("readAll authorizations (as Alice)", () -> aliceRequest(authzDomain, authorization)
+        run("readAll authorizations (as Alice)", () -> aliceRequest(authzDomain, authorization, multiTenant)
                 .readAll().build().execute());
 
-        run("readOne own authorization (as Alice)", () -> aliceRequest(authzDomain, authorization)
+        run("readOne own authorization (as Alice)", () -> aliceRequest(authzDomain, authorization, multiTenant)
                 .readOne(authorization.getUuid()).build().execute());
     }
 
@@ -334,18 +352,18 @@ public final class ExampleApplication {
      * golden path (read/update self) and the rejected path (touch another
      * user's row).
      */
-    private static void demoUserCrud(IApi api, Authorization authorization) {
+    private static void demoUserCrud(IApi api, Authorization authorization, boolean multiTenant) {
         IDomain<?> domain = api.getDomain("users").orElseThrow();
         String ownUuid = authorization.getOwnerId();
         String otherUuid = "demo-user-uuid";
 
-        run("readOne self (as Alice)", () -> aliceRequest(domain, authorization)
+        run("readOne self (as Alice)", () -> aliceRequest(domain, authorization, multiTenant)
                 .readOne(ownUuid).build().execute());
 
-        run("readAll users (as Alice — owner-scoped)", () -> aliceRequest(domain, authorization)
+        run("readAll users (as Alice — owner-scoped)", () -> aliceRequest(domain, authorization, multiTenant)
                 .readAll().build().execute());
 
-        run("readOne someone else (as Alice — must fail)", () -> aliceRequest(domain, authorization)
+        run("readOne someone else (as Alice — must fail)", () -> aliceRequest(domain, authorization, multiTenant)
                 .readOne(otherUuid).build().execute());
 
         // Self-update: change Alice's login string. The framework verifies the
@@ -359,9 +377,9 @@ public final class ExampleApplication {
         selfPatch.setPasswordHash(PasswordAuthentication.hash("hunter2"));
         selfPatch.setAuthorities(authorization.getAuthorities());
 
-        run("updateOne self (as Alice)", () -> aliceRequest(domain, authorization)
+        run("updateOne self (as Alice)", () -> aliceRequest(domain, authorization, multiTenant)
                 .updateOne(ownUuid, selfPatch).build().execute());
-        run("readOne self (post-update)", () -> aliceRequest(domain, authorization)
+        run("readOne self (post-update)", () -> aliceRequest(domain, authorization, multiTenant)
                 .readOne(ownUuid).build().execute());
 
         // Attempt to create another user — Alice is ROLE_USER, no admin
@@ -374,7 +392,7 @@ public final class ExampleApplication {
         bob.setPasswordHash(PasswordAuthentication.hash("s3cret"));
         bob.setAuthorities(List.of("ROLE_USER"));
 
-        run("createOne another user (as Alice — must fail)", () -> aliceRequest(domain, authorization)
+        run("createOne another user (as Alice — must fail)", () -> aliceRequest(domain, authorization, multiTenant)
                 .createOne(bob).build().execute());
     }
 
@@ -385,14 +403,18 @@ public final class ExampleApplication {
      * shares this prelude.
      */
     private static com.garganttua.api.commons.service.IRequestBuilder aliceRequest(IDomain<?> domain,
-            Authorization authorization) {
-        return RequestBuilder.builder(domain)
-                .tenantId(authorization.getTenantId())
-                .requestedTenantId(authorization.getTenantId())
+            Authorization authorization, boolean multiTenant) {
+        var rb = RequestBuilder.builder(domain)
                 .callerId(authorization.getOwnerId())
                 .ownerId(authorization.getOwnerId())
                 .authorities(authorization.getAuthorities())
                 .param("authorization", authorization);
+        // Tenant context only in multi-tenant mode; under scope=system there is none.
+        if (multiTenant && authorization.getTenantId() != null) {
+            rb.tenantId(authorization.getTenantId())
+              .requestedTenantId(authorization.getTenantId());
+        }
+        return rb;
     }
 
     private static void demoKeyCrud(IApi api, ICaller caller) {
@@ -501,7 +523,7 @@ public final class ExampleApplication {
     }
 
     @SuppressWarnings({ "unchecked" })
-    IApi buildApi(boolean withHttp) throws ApiException {
+    IApi buildApi(boolean withHttp, boolean multiTenant) throws ApiException {
         IBootstrap bootstrap = new Bootstrap();
         bootstrap.autoDetect(true).withPackage("com.garganttua");
 
@@ -525,11 +547,16 @@ public final class ExampleApplication {
         // JavalinServletContext request and write the HTTP response back onto it.
         if (withHttp) {
             builder.protocol(new JavalinProtocol());
-            // The api ships no production serializer yet (binding-jackson is an
-            // empty WIP), so register the example's own JSON serializer; the
-            // RESPONSE stage uses it to render entities as JSON (otherwise the
-            // protocol falls back to text/plain toString).
-            builder.serializer(new ExampleJsonSerializer());
+            // Serializers are NOT picked up by asset auto-detection in this wiring,
+            // so register each media type explicitly (the list is additive). Without
+            // a matching serializer the negotiator answers 406.
+            //   application/json + application/xml -> the binding's production
+            //     serializers (now Instant-safe: they register JavaTimeModule).
+            //   text/xml -> the binding ships no text/xml serializer, so the example
+            //     fills that alias with ExampleXmlSerializer.
+            builder.serializer(new com.garganttua.api.binding.jackson.JacksonJsonSerializer());
+            builder.serializer(new com.garganttua.api.binding.jackson.JacksonXmlSerializer());
+            builder.serializer(new ExampleXmlSerializer(com.garganttua.api.commons.MimeType.TEXT_XML));
         }
 
         // Enable workflow execution timing — injects the
@@ -551,9 +578,17 @@ public final class ExampleApplication {
 
         bootstrap.load();
 
-        builder.multiTenant(true)
-                .superTenantId(SUPER_TENANT)
-                .superTenantAutoCreate(true);
+        // Multi-tenancy toggle. In single-tenant mode there is no Tenant domain
+        // and no super-tenant; authenticators run with scope=system (below).
+        builder.multiTenant(multiTenant);
+        if (multiTenant) {
+            builder.superTenantId(SUPER_TENANT).superTenantAutoCreate(true);
+        }
+
+        // Authenticator scope: tenant-scoped (per-tenant principal lookup, caller
+        // must carry a tenantId) vs system (global, no tenant). Used by both the
+        // users authenticator and the authorization self-verify authenticator.
+        AuthenticatorScope scope = multiTenant ? AuthenticatorScope.tenant : AuthenticatorScope.system;
 
         builder.exposeAuthorities().access(Access.anonymous);
 
@@ -585,7 +620,11 @@ public final class ExampleApplication {
         // ---- Demo entities seeded at startup via .upsert(...) ----
 
         Tenant acme = new Tenant();
-        acme.setUuid("tenant-acme-uuid");
+        // Single source of truth: acme's uuid IS the tenant the auth demos
+        // authenticate against (DEMO_TENANT_ID / X-Tenant-Id). They MUST match —
+        // authentication is tenant-scoped, so a mismatch means alice is looked up
+        // in the wrong tenant → "All authentication methods failed".
+        acme.setUuid(DEMO_TENANT_ID);
         acme.setId("acme");
         acme.setName("Acme Corp");
         acme.setCreatedAt(Instant.now());
@@ -593,32 +632,35 @@ public final class ExampleApplication {
         User alice = new User();
         alice.setUuid("user-alice-uuid");
         alice.setId("alice@acme");
-        alice.setTenantId(acme.getUuid());
+        // No tenant binding in single-tenant mode.
+        alice.setTenantId(multiTenant ? acme.getUuid() : null);
         alice.setLogin("alice@acme");
         alice.setPasswordHash(PasswordAuthentication.hash("hunter2"));
         alice.setAuthorities(List.of("ROLE_USER"));
 
-        // 1) Tenant domain (the entity that *is* the tenant).
-        IDomainBuilder<Tenant> tenantBuilder = builder.domain(IClass.getClass(Tenant.class))
-                .tenant(true)
-                .superTenant("superTenant")
-                .entity()
-                .id("id").uuid("uuid")
-                .up()
-                .dto(IClass.getClass(TenantDto.class))
-                .id("id").uuid("uuid")
-                .db(tenantDao)
-                .up()
-                .creation(true).readAll(true).readOne(true)
-                .security()
-                .readAllAccess(Access.anonymous)
-                .readOneAccess(Access.anonymous)
-                .creationAccess(Access.anonymous)
-                .deleteAllAuthority(true)
-                .up()
-                .upsert(acme);
-        if (withHttp) tenantBuilder.interfasse(httpInterface);
-        tenantBuilder.up();
+        // 1) Tenant domain (the entity that *is* the tenant) — multi-tenant only.
+        if (multiTenant) {
+            IDomainBuilder<Tenant> tenantBuilder = builder.domain(IClass.getClass(Tenant.class))
+                    .tenant(true)
+                    .superTenant("superTenant")
+                    .entity()
+                    .id("id").uuid("uuid")
+                    .up()
+                    .dto(IClass.getClass(TenantDto.class))
+                    .id("id").uuid("uuid")
+                    .db(tenantDao)
+                    .up()
+                    .creation(true).readAll(true).readOne(true)
+                    .security()
+                    .readAllAccess(Access.anonymous)
+                    .readOneAccess(Access.anonymous)
+                    .creationAccess(Access.anonymous)
+                    .deleteAllAuthority(true)
+                    .up()
+                    .upsert(acme);
+            if (withHttp) tenantBuilder.interfasse(httpInterface);
+            tenantBuilder.up();
+        }
 
         // 2) Authorization domain (signable JWT-like token). Owned by a user.
         // Since the verifyAuthorization / authenticate unification, an
@@ -646,6 +688,17 @@ public final class ExampleApplication {
                     .expirable("expiresAt")
                     .revokable("revoked")
                     .storable(true)
+                    // JWT-shaped transport form: the framework returns toWire()
+                    // (type.base64(payload).base64(signature)) as the authenticate
+                    // response and decodes incoming Bearer tokens via fromWire().
+                    .encode("toWire")
+                    .decode("fromWire")
+                    // Records WHICH persisted @Key signed the token (${keyDomain}:${uuid}).
+                    // Framework stamps it after signing; the self-verify path
+                    // (verifyTokenSignature → DomainKeySupplier) reads it to resolve the
+                    // exact verification key. Without it: 401 "cannot verify the token
+                    // signature — it carries no qualified signedBy".
+                    .signedBy("signedBy")
                     .signable()
                         .signature("signature")
                         .getDataToSign("getDataToSign")
@@ -653,7 +706,7 @@ public final class ExampleApplication {
                 .up()
                 .authenticator()
                     .login("uuid")
-                    .scope(AuthenticatorScope.tenant)
+                    .scope(scope)
                     .alwaysEnabled(true)
                     .authentication(tokenAuthBuilder);
 
@@ -702,6 +755,11 @@ public final class ExampleApplication {
                 .id("id").uuid("uuid").tenantId("tenantId")
                 .db(userDao)
                 .up()
+                // The authenticator domain must expose readAll: the principal
+                // lookup now routes through the domain's readAll pipeline
+                // (SecurityExpressions.invokeReadAll), so an authenticator-only
+                // domain still needs the read operations enabled.
+                .creation(true).readAll(true).readOne(true)
                 .upsert(alice);
 
         // .authenticator().authentication(ab) returns the per-authentication
@@ -718,7 +776,7 @@ public final class ExampleApplication {
                     .accountNonLocked("accountNonLocked")
                     .accountNonExpired("accountNonExpired")
                     .credentialsNonExpired("credentialsNonExpired")
-                    .scope(AuthenticatorScope.system)
+                    .scope(scope)
                     .authentication(authBuilder);
 
         // userAuth.authorization(new FixedSupplierBuilder<>(new TokenIssuer(), IClass.getClass(TokenIssuer.class)), "issue")

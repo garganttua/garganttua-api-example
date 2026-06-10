@@ -9,9 +9,10 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.MimeType;
@@ -19,21 +20,28 @@ import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.core.reflection.IClass;
 
 /**
- * Minimal JSON {@link ISerializer} for the example's server mode.
+ * XML {@link ISerializer} for the example's server mode, registered for both
+ * {@code application/xml} and {@code text/xml} (one instance per media type).
  *
- * <p>The framework ships the {@code ISerializer} SPI but no concrete production
- * serializer yet (the {@code garganttua-api-binding-jackson} module is an empty
- * WIP), so a consumer provides its own and registers it with
- * {@code builder.serializer(...)}. This one uses Jackson (already on the
- * classpath via the Javalin binding) with a tiny module that renders
- * {@link Instant} as an ISO-8601 string — avoiding the extra
- * {@code jackson-datatype-jsr310} dependency.
+ * <p>Why not the binding's {@code JacksonXmlSerializer}? That one uses a bare
+ * {@link XmlMapper} with no Java-time module, so it throws a 500 on any non-null
+ * {@link Instant} field (e.g. {@code Key.expiration}) — it only appears to work
+ * when every temporal field happens to be null. This one adds the same tiny
+ * ISO-8601 {@code Instant} module as {@link ExampleJsonSerializer}, avoiding the
+ * {@code jackson-datatype-jsr310} dependency, and additionally covers the
+ * {@code text/xml} alias the binding does not advertise.
  */
-public class ExampleJsonSerializer implements ISerializer {
+public class ExampleXmlSerializer implements ISerializer {
 
-    private static final ObjectMapper MAPPER = buildMapper();
+    private static final XmlMapper MAPPER = buildMapper();
 
-    private static ObjectMapper buildMapper() {
+    private final MimeType mimeType;
+
+    public ExampleXmlSerializer(MimeType mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    private static XmlMapper buildMapper() {
         SimpleModule instants = new SimpleModule();
         instants.addSerializer(Instant.class, new JsonSerializer<Instant>() {
             @Override
@@ -47,14 +55,16 @@ public class ExampleJsonSerializer implements ISerializer {
                 return Instant.parse(p.getValueAsString());
             }
         });
-        return new ObjectMapper()
-                .registerModule(instants)
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        XmlMapper mapper = new XmlMapper();
+        mapper.registerModule(instants);
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        return mapper;
     }
 
     @Override
     public MimeType mimeType() {
-        return MimeType.APPLICATION_JSON;
+        return this.mimeType;
     }
 
     @Override
@@ -62,7 +72,7 @@ public class ExampleJsonSerializer implements ISerializer {
         try {
             return MAPPER.writeValueAsBytes(object);
         } catch (Exception e) {
-            throw new ApiException("JSON serialize failed: " + e.getMessage(), e);
+            throw new ApiException("XML serialize failed: " + e.getMessage(), e);
         }
     }
 
@@ -72,7 +82,7 @@ public class ExampleJsonSerializer implements ISerializer {
         try {
             return (T) MAPPER.readValue(data, Class.forName(type.getName()));
         } catch (Exception e) {
-            throw new ApiException("JSON deserialize failed: " + e.getMessage(), e);
+            throw new ApiException("XML deserialize failed: " + e.getMessage(), e);
         }
     }
 }
