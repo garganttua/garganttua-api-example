@@ -557,6 +557,10 @@ public final class ExampleApplication {
             builder.serializer(new com.garganttua.api.binding.jackson.JacksonJsonSerializer());
             builder.serializer(new com.garganttua.api.binding.jackson.JacksonXmlSerializer());
             builder.serializer(new ExampleXmlSerializer(com.garganttua.api.commons.MimeType.TEXT_XML));
+            // Bearer scheme -> Authorization token. Lets a NON-authorization domain
+            // (keys, users) be reached over HTTP with `Authorization: Bearer <jwt>`;
+            // the token's own domain self-decodes the raw header without it.
+            builder.authorizationProtocol(new BearerAuthorizationProtocol());
         }
 
         // Enable workflow execution timing — injects the
