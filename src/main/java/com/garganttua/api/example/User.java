@@ -1,5 +1,6 @@
 package com.garganttua.api.example;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected(
@@ -42,6 +43,10 @@ java.util.List<String> authorities;
 
     public String getLogin() { return login; }
     public void setLogin(String login) { this.login = login; }
+    // Never serialize the password hash over the wire (a read would leak it).
+    // @JsonIgnore only affects (de)serialization; the authenticate pipeline reads
+    // the field reflectively for credential checks, so it is unaffected.
+    @JsonIgnore
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
