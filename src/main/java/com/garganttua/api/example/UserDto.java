@@ -19,8 +19,8 @@ String uuid;
 String tenantId;
     @FieldMappingRule(sourceFieldAddress = "login")
 String login;
-    @FieldMappingRule(sourceFieldAddress = "passwordHash")
-String passwordHash;
+    @FieldMappingRule(sourceFieldAddress = "password")
+String password;
     @FieldMappingRule(sourceFieldAddress = "authorities")
 List<String> authorities;
     @FieldMappingRule(sourceFieldAddress = "enabled")
@@ -42,8 +42,8 @@ Boolean credentialsNonExpired;
     public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     public String getLogin() { return login; }
     public void setLogin(String login) { this.login = login; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     public List<String> getAuthorities() { return authorities; }
     public void setAuthorities(List<String> authorities) { this.authorities = authorities; }
     public Boolean getEnabled() { return enabled; }

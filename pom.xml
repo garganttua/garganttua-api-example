@@ -173,6 +173,25 @@
 			<artifactId>slf4j-simple</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+			<version>7.1.0</version>
+		</dependency>
+		<!-- spring-security-crypto 7 does NOT pull its Spring runtime deps transitively.
+		     BCryptPasswordEncoder needs: commons-logging (LogFactory, used in its <init>)
+		     and spring-core (org.springframework.util.StringUtils, used in matches()).
+		     Without them: NoClassDefFoundError at encoder init / verify time. -->
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.3.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>7.0.3</version>
+		</dependency>
 	</dependencies>
 
 	<profiles>
@@ -431,177 +450,283 @@
 								     index file because maven-shade has
 								     no glob-pattern merger. -->
 								<!-- reflection / dsl / dependency -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Reflected</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Reflected</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.ReflectedBuilder</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.reflection.annotations.ReflectedBuilder</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Indexed</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.reflection.annotations.Indexed</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.bootstrap.annotations.Bootstrap</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.bootstrap.annotations.Bootstrap</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.dsl.annotations.Scan</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.dsl.annotations.Scan</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.dsl.dependency.DependsOn</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.dsl.dependency.DependsOn</resource>
 								</transformer>
 								<!-- expression -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.expression.annotations.Expression</resource>
 								</transformer>
 								<!-- injection -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.BeanProvider</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.BeanProvider</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.ChildContext</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.ChildContext</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Fixed</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Fixed</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Null</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Null</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Property</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Property</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.PropertyProvider</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.PropertyProvider</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Prototype</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Provider</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Provider</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.injection.annotations.Resolver</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.injection.annotations.Resolver</resource>
 								</transformer>
 								<!-- mapper -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRule</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRule</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRules</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mapper.annotations.FieldMappingRules</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.MappingIgnore</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mapper.annotations.MappingIgnore</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRule</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRule</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRules</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mapper.annotations.ObjectMappingRules</resource>
 								</transformer>
 								<!-- mutex -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.Mutex</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mutex.annotations.Mutex</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.mutex.annotations.MutexFactory</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.mutex.annotations.MutexFactory</resource>
 								</transformer>
 								<!-- runtime -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Catch</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Catch</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Code</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Code</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Condition</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Condition</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Context</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Context</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Exception</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Exception</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.ExceptionMessage</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.ExceptionMessage</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.FallBack</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.FallBack</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Input</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Input</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.OnException</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.OnException</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Operation</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Operation</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Output</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Output</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.RuntimeDefinition</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.RuntimeDefinition</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Step</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Step</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Steps</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Steps</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Synchronized</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Synchronized</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variable</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variable</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variables</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.runtime.annotations.Variables</resource>
 								</transformer>
 								<!-- script + workflow -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.script.annotations.ScriptDefinition</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.script.annotations.ScriptDefinition</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.workflow.annotations.WorkflowDefinition</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.workflow.annotations.WorkflowDefinition</resource>
 								</transformer>
 								<!-- configuration -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.Configurable</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.configuration.annotations.Configurable</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigProperty</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigProperty</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigIgnore</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigIgnore</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigurationFormat</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.configuration.annotations.ConfigurationFormat</resource>
 								</transformer>
-								<!-- observability — THE ONE that was causing the user-reported "@Observer not detected" -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/garganttua/index/com.garganttua.core.observability.annotations.Observer</resource>
+								<!-- observability — THE ONE that was causing the user-reported
+								"@Observer not detected" -->
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/garganttua/index/com.garganttua.core.observability.annotations.Observer</resource>
 								</transformer>
-								<!-- JSR-330: Qualifier + Scope are the meta-markers; the others are leaf injection annotations -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+								<!-- JSR-330: Qualifier + Scope are the meta-markers; the others are
+								leaf injection annotations -->
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/garganttua/index/javax.inject.Inject</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/garganttua/index/javax.inject.Singleton</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/garganttua/index/javax.inject.Named</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/garganttua/index/javax.inject.Qualifier</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
 									<resource>META-INF/garganttua/index/javax.inject.Scope</resource>
 								</transformer>
-								<!-- AOT descriptors ServiceLoader entry — needed too so AOTClass_* self-register on startup -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/com.garganttua.core.aot.commons.IAOTSelfRegistering</resource>
+								<!-- AOT descriptors ServiceLoader entry — needed too so AOTClass_*
+								self-register on startup -->
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/services/com.garganttua.core.aot.commons.IAOTSelfRegistering</resource>
 								</transformer>
-								<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/com.garganttua.core.aot.commons.IAOTInfrastructureSeed</resource>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+									<resource>
+										META-INF/services/com.garganttua.core.aot.commons.IAOTInfrastructureSeed</resource>
 								</transformer>
 							</transformers>
 						</configuration>

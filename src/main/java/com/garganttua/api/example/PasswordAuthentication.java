@@ -1,38 +1,27 @@
 package com.garganttua.api.example;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.HexFormat;
 import java.util.List;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.security.authentication.Authentication;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.core.reflection.annotations.Reflected;
 
-@Reflected(
-        allDeclaredFields = true,
-        queryAllDeclaredMethods = true,
-        queryAllDeclaredConstructors = true)
+@Reflected(allDeclaredFields = true, queryAllDeclaredMethods = true, queryAllDeclaredConstructors = true)
 public class PasswordAuthentication {
 
-    public static String hash(String password) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(password.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (Exception e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
-    }
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public IAuthentication authenticate(Object principal, byte[] credentials, IAuthenticatorDefinition definition) {
         if (!(principal instanceof User user)) {
             return failed(credentials);
         }
         String submitted = new String(credentials, StandardCharsets.UTF_8);
-        boolean ok = user.getPasswordHash() != null
-                && user.getPasswordHash().equals(hash(submitted));
+        boolean ok = user.getPassword() != null
+                && passwordEncoder.matches(submitted, user.getPassword());
         if (!ok) {
             return failed(credentials);
         }
@@ -46,7 +35,27 @@ public class PasswordAuthentication {
                 true, true, true, true);
     }
 
-IAuthentication failed(byte[] credentials) {
+    /**
+     * {@code applySecurityOnEntity} hook (wired via
+     * {@code .applySecurityOnEntity("hashPassword")}).
+     * The framework calls it on the User being created/updated, BEFORE persist,
+     * with the
+     * entity auto-wired as the first argument ({@code SecuredEntitySupplier},
+     * supplied type
+     * {@code Object}). Hashes the plaintext password in place with the SAME
+     * {@link BCryptPasswordEncoder} that {@link #authenticate} verifies with, so
+     * the store
+     * never holds it in clear. Returning the entity is optional (in-place mutation
+     * is honored).
+     */
+    public Object hashPassword(Object entity) {
+        if (entity instanceof User user && user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        return entity;
+    }
+
+    IAuthentication failed(byte[] credentials) {
         return new Authentication(false, null, credentials, null, null, true, true, true, true);
     }
 }

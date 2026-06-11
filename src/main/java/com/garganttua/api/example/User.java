@@ -20,7 +20,7 @@ String tenantId;
 Boolean superOwner = false;
 
 String login;
-String passwordHash;
+String password;
 
 Boolean enabled = true;
 Boolean accountNonLocked = true;
@@ -47,8 +47,8 @@ java.util.List<String> authorities;
     // @JsonIgnore only affects (de)serialization; the authenticate pipeline reads
     // the field reflectively for credential checks, so it is unaffected.
     @JsonIgnore
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
@@ -69,7 +69,7 @@ java.util.List<String> authorities;
                 ", uuid='" + uuid + '\'' +
                 ", tenantId='" + tenantId + '\'' +
                 ", login='" + login + '\'' +
-                ", passwordHash=" + (passwordHash == null ? "null" : "***") +
+                ", passwordHash=" + (password == null ? "null" : "***") +
                 ", enabled=" + enabled +
                 ", accountNonLocked=" + accountNonLocked +
                 ", accountNonExpired=" + accountNonExpired +

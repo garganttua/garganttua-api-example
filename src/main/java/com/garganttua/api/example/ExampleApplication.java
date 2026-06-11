@@ -7,20 +7,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.api.binding.javalin.JavalinInterface;
+import com.garganttua.api.binding.javalin.JavalinProtocol;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticationMethodBinderBuilder;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
-import com.garganttua.api.binding.javalin.JavalinInterface;
-import com.garganttua.api.binding.javalin.JavalinProtocol;
 import com.garganttua.api.core.api.ApiBuilder;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder;
@@ -28,6 +30,7 @@ import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder;
 import com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder;
 import com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder;
+import com.garganttua.api.core.security.authentication.SecuredEntitySupplierBuilder;
 import com.garganttua.api.core.service.RequestBuilder;
 import com.garganttua.core.bootstrap.dsl.Bootstrap;
 import com.garganttua.core.bootstrap.dsl.IBootstrap;
@@ -374,7 +377,7 @@ public final class ExampleApplication {
         selfPatch.setUuid(ownUuid);
         selfPatch.setTenantId(authorization.getTenantId());
         selfPatch.setLogin("alice.renamed@acme");
-        selfPatch.setPasswordHash(PasswordAuthentication.hash("hunter2"));
+        selfPatch.setPassword("hunter2");
         selfPatch.setAuthorities(authorization.getAuthorities());
 
         run("updateOne self (as Alice)", () -> aliceRequest(domain, authorization, multiTenant)
@@ -389,7 +392,7 @@ public final class ExampleApplication {
         bob.setUuid(otherUuid);
         bob.setTenantId(authorization.getTenantId());
         bob.setLogin("bob@demo");
-        bob.setPasswordHash(PasswordAuthentication.hash("s3cret"));
+        bob.setPassword("s3cret");
         bob.setAuthorities(List.of("ROLE_USER"));
 
         run("createOne another user (as Alice — must fail)", () -> aliceRequest(domain, authorization, multiTenant)
@@ -597,13 +600,15 @@ public final class ExampleApplication {
         builder.exposeAuthorities().access(Access.anonymous);
 
         PasswordAuthentication authImpl = new PasswordAuthentication();
-        var authBuilder = builder.security()
-                .authentication(new FixedSupplierBuilder<>(authImpl, IClass.getClass(PasswordAuthentication.class)));
-        authBuilder.authenticate("authenticate")
+        IAuthenticationBuilder authBuilder = (IAuthenticationBuilder) builder.security()
+                .authentication(new FixedSupplierBuilder<>(authImpl, IClass.getClass(PasswordAuthentication.class)))
+                .authenticate("authenticate")
                 .withParam(0, new PrincipalSupplierBuilder())
                 .withParam(1, new AuthenticateCredentialsSupplierBuilder())
-                .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
-        authBuilder.up();
+                .withParam(2, new AuthenticatorDefinitionSupplierBuilder()).up()
+                .applySecurityOnEntity("hashPassword")
+                .withParam(0,  new SecuredEntitySupplierBuilder()).up();
+
 
         // Token authentication strategy for the authorization domain (the token
         // verifies itself). Param 3 injects the runtime IDomain so the method can
@@ -618,7 +623,7 @@ public final class ExampleApplication {
                 // yields byte[] (login+password) and supplies null for a token —
                 // the token self-verify needs DecodedAuthorizationSupplier.
                 .withParam(1, new DecodedAuthorizationSupplierBuilder())
-                .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
+                .withParam(2, new AuthenticatorDefinitionSupplierBuilder()).up();
         tokenAuthBuilder.up();
 
         // ---- Demo entities seeded at startup via .upsert(...) ----
@@ -639,7 +644,7 @@ public final class ExampleApplication {
         // No tenant binding in single-tenant mode.
         alice.setTenantId(multiTenant ? acme.getUuid() : null);
         alice.setLogin("alice@acme");
-        alice.setPasswordHash(PasswordAuthentication.hash("hunter2"));
+        alice.setPassword("hunter2");
         alice.setAuthorities(List.of("ROLE_USER"));
 
         // 1) Tenant domain (the entity that *is* the tenant) — multi-tenant only.

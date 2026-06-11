@@ -59,10 +59,15 @@ public class TokenAuthentication {
                 ? token.getAuthorities()
                 : List.of();
         return new Authentication(
-                true, principal, credentials,
+                true,
+                principal,
+                credentials,
                 token.getType() != null ? token.getType() : "bearer",
                 authorities,
-                true, true, true, true);
+                true,
+                true,
+                true,
+                true);
     }
 
     private IAuthentication failed() {
