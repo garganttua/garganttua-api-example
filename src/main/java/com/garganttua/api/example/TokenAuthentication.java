@@ -58,12 +58,20 @@ public class TokenAuthentication {
         List<String> authorities = token.getAuthorities() != null
                 ? token.getAuthorities()
                 : List.of();
+        // Enriched IAuthentication (security context). The decoded token IS the
+        // authorization; tenantId/ownerId come straight off it (the framework
+        // recomputes super flags server-side, so false here). Account-status order:
+        // credentialsNonExpired, enabled, accountNonLocked, accountNonExpired.
         return new Authentication(
                 true,
                 principal,
                 credentials,
-                token.getType() != null ? token.getType() : "bearer",
+                token,
                 authorities,
+                token.getTenantId(),
+                token.getOwnerId(),
+                false,
+                false,
                 true,
                 true,
                 true,
@@ -71,6 +79,6 @@ public class TokenAuthentication {
     }
 
     private IAuthentication failed() {
-        return new Authentication(false, null, null, null, null, true, true, true, true);
+        return new Authentication(false, null, null, null, null, null, null, false, false, true, true, true, true);
     }
 }

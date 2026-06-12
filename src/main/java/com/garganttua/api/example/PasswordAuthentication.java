@@ -28,10 +28,17 @@ public class PasswordAuthentication {
         List<String> authorities = user.getAuthorities() != null
                 ? user.getAuthorities()
                 : List.of("ROLE_USER");
+        // Enriched IAuthentication (security context): the verified identity now
+        // carries tenantId/ownerId + super flags, which the framework uses to drive
+        // the caller (reconcile). authorization is null here — the pipeline mints it
+        // after authenticate. Super flags are recomputed server-side from the
+        // registries, so false is fine. Account-status booleans:
+        // credentialsNonExpired, enabled, accountNonLocked, accountNonExpired.
         return new Authentication(
-                true, user, credentials,
-                user.getUuid(),
+                true, user, credentials, null,
                 authorities,
+                user.getTenantId(), user.getUuid(),
+                false, false,
                 true, true, true, true);
     }
 
@@ -56,6 +63,6 @@ public class PasswordAuthentication {
     }
 
     IAuthentication failed(byte[] credentials) {
-        return new Authentication(false, null, credentials, null, null, true, true, true, true);
+        return new Authentication(false, null, credentials, null, null, null, null, false, false, true, true, true, true);
     }
 }
