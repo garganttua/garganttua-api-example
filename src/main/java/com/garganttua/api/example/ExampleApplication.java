@@ -194,10 +194,12 @@ public final class ExampleApplication {
     }
 
     /**
-     * Renders a filtered slice of the {@link CoreStatsObserver} snapshot as
-     * a fixed-width table, sorted by total time descending. The {@code label}
-     * controls the first column's header — kept short so each section reads
-     * like "what dominates this layer of the pipeline".
+     * Renders a filtered slice of the {@link CoreStatsObserver} snapshot as a
+     * box-drawn table, sorted by total time descending, with a TOTAL footer.
+     * The {@code label} is the first column's header — kept short so each section
+     * reads like "what dominates this layer of the pipeline". The first column
+     * sizes to the widest source (capped); numeric columns are right-aligned with
+     * thousands separators.
      */
     private static void printCoreStats(
             Map<String, CoreStatsObserver.SourceStats> snapshot,
@@ -211,25 +213,91 @@ public final class ExampleApplication {
             System.out.println("  (no " + label + " events recorded)");
             return;
         }
-        String header = String.format("  %-50s %6s %6s %6s %10s %10s %10s %10s",
-                label, "count", "ok", "ko", "total(µs)", "min(µs)", "max(µs)", "avg(µs)");
-        System.out.println(header);
-        System.out.println("  " + "-".repeat(header.length() - 2));
+
+        String[] headers = { label, "count", "ok", "ko", "total µs", "min µs", "max µs", "avg µs" };
+        boolean[] rightAlign = { false, true, true, true, true, true, true, true };
+        int cols = headers.length;
+        int firstColCap = 56;
+
+        java.util.List<String[]> table = new java.util.ArrayList<>();
+        long tCount = 0;
+        long tOk = 0;
+        long tKo = 0;
+        long tTotal = 0;
+        long tMin = Long.MAX_VALUE;
+        long tMax = 0;
         for (var s : rows) {
-            System.out.printf("  %-50s %6d %6d %6d %10d %10d %10d %10d%n",
-                    truncate(s.source(), 50),
-                    s.count(),
-                    s.successCount(),
-                    s.failureCount(),
-                    toMicros(s.totalDuration()),
-                    toMicros(s.minDuration()),
-                    toMicros(s.maxDuration()),
-                    toMicros(s.averageDuration()));
+            long total = toMicros(s.totalDuration());
+            long min = toMicros(s.minDuration());
+            long max = toMicros(s.maxDuration());
+            table.add(new String[] {
+                    truncate(s.source(), firstColCap),
+                    num(s.count()), num(s.successCount()), num(s.failureCount()),
+                    num(total), num(min), num(max), num(toMicros(s.averageDuration())) });
+            tCount += s.count();
+            tOk += s.successCount();
+            tKo += s.failureCount();
+            tTotal += total;
+            tMin = Math.min(tMin, min);
+            tMax = Math.max(tMax, max);
         }
+        String[] footer = {
+                "TOTAL (" + rows.size() + ")",
+                num(tCount), num(tOk), num(tKo),
+                num(tTotal), num(tMin == Long.MAX_VALUE ? 0 : tMin), num(tMax),
+                num(tCount == 0 ? 0 : tTotal / tCount) };
+
+        int[] w = new int[cols];
+        for (int i = 0; i < cols; i++) {
+            w[i] = headers[i].length();
+        }
+        for (String[] r : table) {
+            for (int i = 0; i < cols; i++) {
+                w[i] = Math.max(w[i], r[i].length());
+            }
+        }
+        for (int i = 0; i < cols; i++) {
+            w[i] = Math.max(w[i], footer[i].length());
+        }
+
+        System.out.println(tableBorder(w, '┌', '┬', '┐'));
+        System.out.println(tableRow(headers, w, rightAlign));
+        System.out.println(tableBorder(w, '├', '┼', '┤'));
+        for (String[] r : table) {
+            System.out.println(tableRow(r, w, rightAlign));
+        }
+        System.out.println(tableBorder(w, '├', '┼', '┤'));
+        System.out.println(tableRow(footer, w, rightAlign));
+        System.out.println(tableBorder(w, '└', '┴', '┘'));
     }
 
     private static long toMicros(Duration d) {
         return d == null ? 0L : d.toNanos() / 1_000L;
+    }
+
+    /** Groups an integer with thousands separators (ROOT locale → stable comma). */
+    private static String num(long v) {
+        return String.format(java.util.Locale.ROOT, "%,d", v);
+    }
+
+    /** A horizontal box-drawing rule with the given left / column-junction / right glyphs. */
+    private static String tableBorder(int[] widths, char left, char junction, char right) {
+        StringBuilder sb = new StringBuilder("  ").append(left);
+        for (int i = 0; i < widths.length; i++) {
+            sb.append("─".repeat(widths[i] + 2));
+            sb.append(i == widths.length - 1 ? right : junction);
+        }
+        return sb.toString();
+    }
+
+    /** A table row; each cell padded to its column width and left/right aligned. */
+    private static String tableRow(String[] cells, int[] widths, boolean[] rightAlign) {
+        StringBuilder sb = new StringBuilder("  │");
+        for (int i = 0; i < cells.length; i++) {
+            String fmt = "%" + (rightAlign[i] ? "" : "-") + widths[i] + "s";
+            sb.append(' ').append(String.format(fmt, cells[i])).append(" │");
+        }
+        return sb.toString();
     }
 
     private static String truncate(String s, int max) {
