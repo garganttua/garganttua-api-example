@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 @Reflected(allDeclaredFields = true, queryAllDeclaredMethods = true, queryAllDeclaredConstructors = true)
@@ -107,6 +108,11 @@ public class Authorization {
         this.revoked = revoked;
     }
 
+    // signature / signedBy / dataToSign are wire-internal signing material: they
+    // belong in the JWT and the persistence DTO, never in an HTTP read body.
+    // @JsonIgnore hides them from serialization only; the framework's reflective
+    // field mapping (entity <-> AuthorizationDto) still round-trips them.
+    @JsonIgnore
     public byte[] getSignature() {
         return signature;
     }
@@ -115,6 +121,7 @@ public class Authorization {
         this.signature = signature;
     }
 
+    @JsonIgnore
     public String getSignedBy() {
         return signedBy;
     }
@@ -123,6 +130,7 @@ public class Authorization {
         this.signedBy = signedBy;
     }
 
+    @JsonIgnore
     public byte[] getDataToSign() {
         // The JWT signing input over the SIGNED claim set (signedBy excluded — it
         // is stamped only after signing). Deterministic, so the bytes signed at
