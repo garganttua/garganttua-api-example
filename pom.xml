@@ -67,95 +67,41 @@
 	</repositories>
 
 	<dependencies>
-		<!-- mode-agnostic api/core deps -->
+		<!-- garganttua-api Javalin starter: aggregates the whole api stack —
+		     api-core + bootstrap + the Javalin HTTP binding + the Jackson
+		     (JSON/XML) serializers — and transitively the core modules
+		     (reflection, runtime, injection, mapper, workflow, script,
+		     execution, commons, crypto). Replaces the previously hand-listed
+		     api/core dependencies.
+		     Exclusions:
+		       - the reflection PROVIDERS (runtime-reflection / reflections /
+		         aot-reflection) are pruned so the reflection-mode profiles
+		         below remain the SINGLE source of provider selection — the AOT,
+		         runtime, hybrid and native modes still work unchanged;
+		       - logback-classic so slf4j-simple (driven by
+		         simplelogger.properties) stays the only SLF4J binding. -->
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-commons</artifactId>
-			<version>${garganttua.api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-core</artifactId>
+			<artifactId>garganttua-api-starter-javalin</artifactId>
 			<version>${garganttua.api.version}</version>
 			<exclusions>
-				<!-- api-core depends on garganttua-aot-reflection directly.
-				     Excluded here so the AOT provider is opt-in via the
-				     starter (aot / hybrid / native modes), and does NOT
-				     leak into runtime mode. To be removed once api-core
-				     stops pinning the SPI provider artefact directly. -->
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-runtime-reflection</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-reflections</artifactId>
+				</exclusion>
 				<exclusion>
 					<groupId>com.garganttua.core</groupId>
 					<artifactId>garganttua-aot-reflection</artifactId>
 				</exclusion>
-			</exclusions>
-		</dependency>
-		<!-- Server mode: Javalin HTTP transport + Jackson JSON serializer.
-		     binding-javalin brings io.javalin + the @Protocol/@Interface;
-		     binding-jackson brings the @Serializer. Both are auto-detected at
-		     bootstrap (scan surface com.garganttua). Headless mode wires no
-		     interface, so no server starts. -->
-		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-binding-javalin</artifactId>
-			<version>${garganttua.api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-binding-jackson</artifactId>
-			<version>${garganttua.api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflection</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-injection</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-mapper</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-workflow</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-script</artifactId>
-			<version>${garganttua.core.version}</version>
-			<!-- Exclude Logback so slf4j-simple (configured via
-			     simplelogger.properties) is the only SLF4J provider. -->
-			<exclusions>
 				<exclusion>
 					<groupId>ch.qos.logback</groupId>
 					<artifactId>logback-classic</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-execution</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-commons</artifactId>
-			<version>${garganttua.core.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-crypto</artifactId>
-			<version>${garganttua.core.version}</version>
 		</dependency>
 		<!-- Observability annotations (@Observer) + LogEvent. Was reachable
 		     transitively until core 02924f53 (Diagnostics → observable Logger)
