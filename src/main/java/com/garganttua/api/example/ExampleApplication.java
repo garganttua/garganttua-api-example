@@ -39,6 +39,11 @@ import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.workflow.WorkflowTimingConfig;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.dao.mongodb.MongoDao;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 /**
  * Standalone showcase of garganttua-api v3 wiring:
@@ -65,10 +70,9 @@ public final class ExampleApplication {
     /** HTTP port used in server mode (the Javalin interface). */
     private static final int HTTP_PORT = 7000;
 
-    private final InMemoryDao tenantDao = new InMemoryDao();
-    private final InMemoryDao userDao = new InMemoryDao();
-    private final InMemoryDao authorizationDao = new InMemoryDao();
-    private final InMemoryDao keyDao = new InMemoryDao();
+    // Persistence is chosen per run (in-memory by default, MongoDB with the
+    // 'mongo' flag); the DAOs are created in buildApi via daoFactory(...).
+    private MongoClient mongoClient;
 
     private final CoreStatsObserver coreStats = new CoreStatsObserver();
 
@@ -98,9 +102,14 @@ public final class ExampleApplication {
         // owner-scoping still applies. Default is multi-tenant. Combinable with
         // every other flag, e.g. `java ... ExampleApplication notenant server`.
         boolean multiTenant = !hasArg(args, "notenant", "--notenant", "--no-tenant", "single", "--single", "singletenant");
+        // mongo / --mongo: persist via garganttua-api's MongoDao instead of the
+        // in-memory DAO. Connection from -Dmongodb.uri / -Dmongodb.database
+        // (defaults: mongodb://localhost:27017, db garganttua-api-example).
+        // Needs a reachable MongoDB; default stays in-memory (no external dep).
+        boolean mongo = hasArg(args, "mongo", "--mongo");
 
         ExampleApplication app = new ExampleApplication();
-        IApi api = app.buildApi(server, multiTenant);
+        IApi api = app.buildApi(server, multiTenant, mongo);
 
         String[] domains = multiTenant ? DOMAIN_NAMES : SINGLE_TENANT_DOMAIN_NAMES;
 
@@ -594,7 +603,7 @@ public final class ExampleApplication {
     }
 
     @SuppressWarnings({ "unchecked" })
-    IApi buildApi(boolean withHttp, boolean multiTenant) throws ApiException {
+    IApi buildApi(boolean withHttp, boolean multiTenant, boolean mongo) throws ApiException {
         IBootstrap bootstrap = new Bootstrap();
         bootstrap.autoDetect(true).withPackage("com.garganttua");
 
@@ -715,6 +724,26 @@ public final class ExampleApplication {
         alice.setPassword("hunter2");
         alice.setAuthorities(List.of("ROLE_USER"));
 
+        // Persistence backend, one DAO per domain (collection = domain name):
+        // MongoDB (mongo mode, via garganttua-api's MongoDao) or in-memory (default).
+        MongoDatabase mongoDatabase = null;
+        if (mongo) {
+            String uri = System.getProperty("mongodb.uri", "mongodb://localhost:27017");
+            String dbName = System.getProperty("mongodb.database", "garganttua-api-example");
+            this.mongoClient = MongoClients.create(uri);
+            mongoDatabase = this.mongoClient.getDatabase(dbName);
+            System.out.println("Persistence: MongoDB (" + uri + " / db " + dbName + ")");
+        } else {
+            System.out.println("Persistence: in-memory");
+        }
+        final MongoDatabase mdb = mongoDatabase;
+        // One DAO per domain (collection = domain name): MongoDB in mongo mode,
+        // in-memory otherwise. The key store also goes to Mongo now that the
+        // binding ships a BSON codec for the IKey signing material.
+        java.util.function.Function<String, IDao> dao = mongo
+                ? collection -> new MongoDao(mdb, collection)
+                : collection -> new InMemoryDao();
+
         // 1) Tenant domain (the entity that *is* the tenant) — multi-tenant only.
         if (multiTenant) {
             IDomainBuilder<Tenant> tenantBuilder = builder.domain(IClass.getClass(Tenant.class))
@@ -725,7 +754,7 @@ public final class ExampleApplication {
                     .up()
                     .dto(IClass.getClass(TenantDto.class))
                     .id("id").uuid("uuid")
-                    .db(tenantDao)
+                    .db(dao.apply("tenants"))
                     .up()
                     .creation(true).readAll(true).readOne(true)
                     .security()
@@ -754,7 +783,7 @@ public final class ExampleApplication {
                 .up()
                 .dto(IClass.getClass(AuthorizationDto.class))
                 .id("id").uuid("uuid").tenantId("tenantId")
-                .db(authorizationDao)
+                .db(dao.apply("authorizations"))
                 .up()
                 .creation(true).readAll(true).readOne(true);
 
@@ -802,7 +831,7 @@ public final class ExampleApplication {
                 .up()
                 .dto(IClass.getClass(Key.class))
                 .id("id").uuid("uuid").tenantId("tenantId")
-                .db(keyDao)
+                .db(dao.apply("keys"))
                 .up()
                 .creation(true).readAll(true).readOne(true);
         // @Key config now lives under .security().key() (api DSL refactor:
@@ -830,7 +859,7 @@ public final class ExampleApplication {
                 .up()
                 .dto(IClass.getClass(UserDto.class))
                 .id("id").uuid("uuid").tenantId("tenantId")
-                .db(userDao)
+                .db(dao.apply("users"))
                 .up()
                 // The authenticator domain must expose readAll: the principal
                 // lookup now routes through the domain's readAll pipeline
@@ -867,7 +896,13 @@ public final class ExampleApplication {
                     .usage(AuthenticatorKeyUsage.oneForEach)
                     .algorithm(KeyAlgorithm.EC_256)
                     .signatureAlgorithm(SignatureAlgorithm.SHA256)
-                    .lifeTime(365, TimeUnit.DAYS);
+                    .lifeTime(365, TimeUnit.DAYS)
+                    // Auto-rotate the signing key: when the stored key is expired
+                    // or revoked, the framework generates+persists a fresh one
+                    // instead of throwing (the old entry is kept so tokens signed
+                    // before rotation still verify). Requires autoGenerate (default
+                    // true). Rotation fires when a key passes its lifeTime above.
+                    .autoRotate(true);
 
         if (withHttp) userBuilder.interfasse(httpInterface);
         userBuilder.up();

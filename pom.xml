@@ -138,6 +138,29 @@
 			<artifactId>spring-core</artifactId>
 			<version>7.0.3</version>
 		</dependency>
+		<!-- MongoDB DAO (optional 'mongo' run mode). garganttua-api's MongoDao
+		     (implements IDao, drop-in for .db(...)) + the mongodb-driver-sync.
+		     Reflection providers excluded so the reflection-mode profiles stay the
+		     single source of provider selection (as for the api starter). -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-dao-mongodb</artifactId>
+			<version>${garganttua.api.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-runtime-reflection</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-reflections</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.garganttua.core</groupId>
+					<artifactId>garganttua-aot-reflection</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	</dependencies>
 
 	<profiles>
